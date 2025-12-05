@@ -1,0 +1,66 @@
+# ───────────────────────────────
+# Node
+# ───────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# dotenv environment files
+.env
+.env.*.local
+
+# Logs
+logs/
+*.log
+*.log.*
+debug.log
+error.log
+
+# PID files
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# ───────────────────────────────
+# Build / Cache
+# ───────────────────────────────
+dist/
+build/
+.cache/
+.eslintcache
+.parcel-cache/
+
+# ───────────────────────────────
+# OS / Editor garbage
+# ───────────────────────────────
+.DS_Store
+Thumbs.db
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# ───────────────────────────────
+# Temp files
+# ───────────────────────────────
+tmp/
+temp/
+*.tmp
+*.swp
+*.swo
+
+# ───────────────────────────────
+# Coverage & Testing
+# ───────────────────────────────
+coverage/
+.nyc_output/
+jest-cache/
+jest-html-reporters-*
+
+# ───────────────────────────────
+# MongoDB dump / backups
+# ───────────────────────────────
+dump/
