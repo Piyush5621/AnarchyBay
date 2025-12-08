@@ -1,31 +1,17 @@
-import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/auth/use-auth';
-import api from '@/lib/api/client';
+import useUserProfileInfo from '@/hooks/profile/use-user-profile-info';
+import useTotalProducts from '@/hooks/products/use-total-products';
 
 export default function Profile(){
-  const { isAuthenticated, user } = useAuth();
-  const [profile, setProfile] = useState(null);
-  const [stats, setStats] = useState({ totalSales: 0, products: 0, revenue: 0 });
-  const [loading, setLoading] = useState(true);
+  const { isAuthenticated, user, role } = useAuth();
+  const profileQuery = useUserProfileInfo();
+  const productsQuery = useTotalProducts();
 
-  useEffect(()=>{
-    const load = async ()=>{
-      setLoading(true);
-      try{
-        const p = await api.post('/api/profile/get-user-profile', { userId: user?.id }, { requireAuth: true }).catch(()=>null);
-        setProfile(p || null);
+  const loading = (!isAuthenticated) || profileQuery.isLoading || productsQuery.isLoading;
+  const profile = profileQuery.data || null;
+  const stats = { totalSales: 0, products: productsQuery.data ?? 0, revenue: 0 };
 
-        // seller stats: try resources count
-        const c = await api.get('/api/resources/count', { requireAuth: false }).catch(()=>null);
-        setStats({ totalSales: 0, products: c?.count ?? 0, revenue: 0 });
-      }catch(err){
-        console.error(err);
-      }finally{ setLoading(false); }
-    };
-    if (isAuthenticated) load();
-  }, [isAuthenticated, user]);
-
-  const isSeller = user?.role === 'seller';
+  const isSeller = role === 'seller';
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">

@@ -73,13 +73,13 @@ export const getUserProfileController = async (req, res) => {
 
 export const getTotalUsersController = async (req, res) => {
     try{
-        const {data, error} = await getTotalUsers();
+        const {count, error} = await getTotalUsers();
         
         if (error){
             return handleSupabaseError(res, error);
         }
 
-        res.status(200).json(data);
+        res.status(200).json({ count });
     } catch (error){
         console.error("Error in getTotalUsers controller: ", error);
         return res.status(500).json({

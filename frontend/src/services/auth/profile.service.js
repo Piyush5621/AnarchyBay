@@ -26,6 +26,6 @@ export const getUserProfile = async (userId) => {
 }
 
 export const getTotalUsers = async () => {
-  const data = await api.get("/api/profile/get-total-users", { requireAuth: false })
-  return data;
+  const { count } = await api.get("/api/profile/get-total-users", { requireAuth: false })
+  return count || 0;
 };

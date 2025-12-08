@@ -10,5 +10,5 @@ export const getUserProfile = async ({ userId }) => {
 }
 
 export const getTotalUsers = async () => {
-    return await supabase.from("profiles").select("*", { count: "exact" });
+    return await supabase.from("profiles").select("*", { count: "exact", head: true });
 }
