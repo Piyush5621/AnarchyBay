@@ -2,6 +2,10 @@ export const QUERY_KEYS = {
   USER: 'user',
   CURRENT_USER: 'current-user',
   TOTAL_USERS: 'total-users',
+  DASHBOARD: 'dashboard',
+  PRODUCTS: 'products',
+  TOTAL_PRODUCTS: 'total-products',
+  USER_PROFILE: 'user-profile',
 }
 
 export const LOCALSTORAGE_KEYS = {
