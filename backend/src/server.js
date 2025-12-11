@@ -18,29 +18,31 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { rateLimiters } from './middleware/rateLimiter.js';
 
 // Import routes
-const { default: authRoutes } = await import('./routes/auth.route.js');
-const { default: profileRoutes } = await import('./routes/profile.route.js');
-const { default: productsRoutes } = await import('./routes/product.route.js');
-const { default: fileRoutes } = await import('./routes/file.route.js');
-const { default: purchaseRoutes } = await import('./routes/purchase.route.js');
-const { default: discountRoutes } = await import('./routes/discount.route.js');
-const { default: downloadRoutes } = await import('./routes/download.route.js');
-const { default: licenseRoutes } = await import('./routes/license.route.js');
-const { default: analyticsRoutes } = await import('./routes/analytics.route.js');
-const { default: payoutRoutes } = await import('./routes/payout.route.js');
-const { default: webhookRoutes } = await import('./routes/webhook.route.js');
-const { default: adminRoutes } = await import('./routes/admin.route.js');
-const { default: reviewRoutes } = await import('./routes/review.route.js');
-const { default: wishlistRoutes } = await import('./routes/wishlist.route.js');
-const { default: cartRoutes } = await import('./routes/cart.route.js');
+import authRoutes from './routes/auth.route.js';
+import profileRoutes from './routes/profile.route.js';
+import productsRoutes from './routes/product.route.js';
+import fileRoutes from './routes/file.route.js';
+import purchaseRoutes from './routes/purchase.route.js';
+import discountRoutes from './routes/discount.route.js';
+import downloadRoutes from './routes/download.route.js';
+import licenseRoutes from './routes/license.route.js';
+import analyticsRoutes from './routes/analytics.route.js';
+import payoutRoutes from './routes/payout.route.js';
+import webhookRoutes from './routes/webhook.route.js';
+import adminRoutes from './routes/admin.route.js';
+import reviewRoutes from './routes/review.route.js';
+import wishlistRoutes from './routes/wishlist.route.js';
+import cartRoutes from './routes/cart.route.js';
 
 const PORT = process.env.PORT || 3000;
 const CLIENT_ORIGIN = process.env.FRONTEND_URL || 'http://localhost:5173';
 
 const app = express();
 
-// Initialize Redis connection
-initRedis();
+// Initialize Redis connection (only if REDIS_URL is set)
+if (process.env.REDIS_URL) {
+  initRedis();
+}
 
 // Security middleware - helmet for security headers
 app.use(helmet({
@@ -112,32 +114,37 @@ app.use(notFoundHandler);
 // Global error handler - must be last
 app.use(errorHandler);
 
-// Start server
-const server = app.listen(PORT, () => {
-    logger.info(`Server listening on http://localhost:${PORT}`);
-    logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-});
-
-// Graceful shutdown
-const gracefulShutdown = async (signal) => {
-  logger.info(`${signal} received, starting graceful shutdown`);
-  
-  server.close(async () => {
-    logger.info('HTTP server closed');
-    
-    // Close Redis connection
-    await closeRedis();
-    
-    logger.info('All connections closed, exiting process');
-    process.exit(0);
+// Only start server if not running in Vercel
+if (!process.env.VERCEL) {
+  const server = app.listen(PORT, () => {
+      logger.info(`Server listening on http://localhost:${PORT}`);
+      logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
   });
 
-  // Force shutdown after 10 seconds
-  setTimeout(() => {
-    logger.error('Forced shutdown after timeout');
-    process.exit(1);
-  }, 10000);
-};
+  // Graceful shutdown
+  const gracefulShutdown = async (signal) => {
+    logger.info(`${signal} received, starting graceful shutdown`);
+    
+    server.close(async () => {
+      logger.info('HTTP server closed');
+      
+      // Close Redis connection
+      await closeRedis();
+      
+      logger.info('All connections closed, exiting process');
+      process.exit(0);
+    });
 
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+    // Force shutdown after 10 seconds
+    setTimeout(() => {
+      logger.error('Forced shutdown after timeout');
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+}
+
+// Export for Vercel
+export default app;
