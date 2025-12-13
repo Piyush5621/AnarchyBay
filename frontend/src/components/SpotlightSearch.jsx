@@ -253,7 +253,7 @@ export default function SpotlightSearch({ isOpen, onClose }) {
             onChange={e => setState(s => ({ ...s, query: e.target.value, selectedIndex: 0 }))}
             onKeyDown={handleKeyDown}
             placeholder="Quick Search"
-            className="flex-1 text-[17px] bg-transparent outline-none placeholder:text-gray-400 text-gray-900 font-medium"
+            className="flex-1 text-[20px] bg-transparent outline-none placeholder:text-gray-400 text-gray-900 font-medium"
             style={{ caretColor: '#3b82f6' }}
           />
           <kbd className="hidden sm:flex items-center justify-center min-w-[32px] h-8 px-2.5 text-xs font-semibold bg-white/70 text-gray-600 rounded-lg border border-gray-300/50 shadow-sm">
