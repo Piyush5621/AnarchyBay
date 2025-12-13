@@ -8,10 +8,11 @@ export default function AboutPage() {
       <div className="pt-20 px-4 sm:px-6 md:px-8 pb-8 md:pb-12 mx-2 sm:mx-4 md:mx-8 my-4 md:my-8 border-2 md:border-4 border-black">
         <div className="excerpt max-w-none">
           <div className="title__container text-center mb-8 md:mb-16">
-            <h1 className="title__first text-2xl sm:text-3xl md:text-4xl italic font-light mt-6 md:mt-12 mb-0">Anarchy</h1>
-            <h1 className="title__second text-5xl sm:text-6xl md:text-8xl font-light">Bay</h1>
+            <h1 className="font-['Brush_Script_MT',cursive] text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-normal mt-6 md:mt-12 mb-4">
+              Anarchy Bay
+            </h1>
             <img 
-              className="flower hidden lg:block mx-auto mt-4 h-48 md:h-64 lg:h-80 object-contain"
+              className="flower mx-auto mt-4 mb-6 h-32 sm:h-40 md:h-48 lg:h-64 object-contain"
               src="https://raw.githubusercontent.com/melipi/img-repo/main/flower-silhouette.png"
               alt="flower silhouette"
             />
