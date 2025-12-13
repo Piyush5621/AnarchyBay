@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search01Icon, ShoppingBag02Icon, UserIcon, Hashtag01Icon } from "hugeicons-react";
+import { Search, ShoppingBag, User, Hash } from "lucide-react";
 
 const BANGS = {
-  "!p": { type: "products", label: "Products", icon: ShoppingBag02Icon, endpoint: "/api/products/list" },
-  "!c": { type: "creators", label: "Creators", icon: UserIcon, endpoint: "/api/profile/search" },
-  "!t": { type: "tags", label: "Tags", icon: Hashtag01Icon, endpoint: "/api/products/list" },
+  "!p": { type: "products", label: "Products", icon: ShoppingBag, endpoint: "/api/products/list" },
+  "!c": { type: "creators", label: "Creators", icon: User, endpoint: "/api/profile/search" },
+  "!t": { type: "tags", label: "Tags", icon: Hash, endpoint: "/api/products/list" },
 };
 
 // Parse advanced search filters
@@ -245,7 +245,7 @@ export default function SpotlightSearch({ isOpen, onClose }) {
         }}
       >
         <div className="flex items-center gap-4 px-6 py-5 border-b border-gray-200/50">
-          <Search01Icon size={22} className="text-gray-400 flex-shrink-0 animate-search-pulse" strokeWidth={2.5} />
+          <Search size={22} className="text-gray-400 flex-shrink-0 animate-search-pulse" strokeWidth={2.5} />
           <input
             ref={inputRef}
             type="text"
