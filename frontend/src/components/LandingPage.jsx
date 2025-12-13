@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/use-auth";
 import NavBar from "./NavBar";
+import ChatWidget from "./ChatWidget";
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -28,6 +29,8 @@ export default function LandingPage() {
         <PricingSection navigate={navigate} isAuthenticated={isAuthenticated} />
         <CTASection navigate={navigate} isAuthenticated={isAuthenticated} />
       </main>
+
+      <ChatWidget />
 
       <Footer />
     </div>

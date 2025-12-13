@@ -33,7 +33,8 @@ import adminRoutes from './routes/admin.route.js';
 import reviewRoutes from './routes/review.route.js';
 import wishlistRoutes from './routes/wishlist.route.js';
 import cartRoutes from './routes/cart.route.js';
-import contactRoutes from './routes/contact.route.js'
+// import contactRoutes from './routes/contact.route.js'
+import chatRoutes from './routes/chat.route.js';
 
 // Keep-alive function to prevent Render from sleeping
 const keepAwake = () => {
@@ -159,7 +160,8 @@ app.use('/api/admin', rateLimiters.api, adminRoutes);
 app.use('/api/reviews', rateLimiters.api, reviewRoutes);
 app.use('/api/wishlist', rateLimiters.api, wishlistRoutes);
 app.use('/api/cart', rateLimiters.api, cartRoutes);
-app.use('/api/contact',rateLimiters.api,contactRoutes);
+// app.use('/api/contact',rateLimiters.api,contactRoutes);
+app.use('/api/chat', chatRoutes);
 
 // 404 handler - must be after all routes
 app.use(notFoundHandler);
