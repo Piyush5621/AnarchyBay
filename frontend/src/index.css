@@ -182,11 +182,107 @@ body {
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
+@keyframes liquid-menu {
+  0% { 
+    opacity: 0; 
+    transform: scaleY(0.3) translateY(-20px); 
+    transform-origin: top;
+    border-radius: 24px;
+  }
+  50% { 
+    transform: scaleY(1.02) translateY(2px); 
+    border-radius: 8px;
+  }
+  100% { 
+    opacity: 1; 
+    transform: scaleY(1) translateY(0); 
+    transform-origin: top;
+    border-radius: 0;
+  }
+}
+
+@keyframes liquid-dropdown {
+  0% { 
+    opacity: 0; 
+    transform: scaleY(0.4) translateY(-15px); 
+    transform-origin: top;
+  }
+  60% { 
+    transform: scaleY(1.05) translateY(3px); 
+  }
+  100% { 
+    opacity: 1; 
+    transform: scaleY(1) translateY(0); 
+  }
+}
+
+@keyframes liquid-spotlight {
+  0% { 
+    opacity: 0;
+    transform: scale(0.85) translateY(-30px);
+    filter: blur(10px);
+  }
+  50% {
+    transform: scale(1.02) translateY(5px);
+  }
+  100% { 
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-in-up {
+  from { 
+    opacity: 0; 
+    transform: translateY(10px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes search-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
 .animate-float { animation: float 4s ease-in-out infinite; }
 .animate-bounce-subtle { animation: bounce-subtle 2s ease-in-out infinite; }
 .animate-slide-up { animation: slide-up 0.5s ease-out forwards; }
 .animate-spotlight-in { animation: spotlight-in 0.2s ease-out; }
 .animate-fade-in { animation: fade-in 0.15s ease-out; }
+
+.animate-liquid-menu {
+  animation: liquid-menu 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-liquid-dropdown {
+  animation: liquid-dropdown 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-liquid-spotlight {
+  animation: liquid-spotlight 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-backdrop-in {
+  animation: backdrop-in 0.3s ease-out forwards;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  opacity: 0;
+}
+
+.animate-search-pulse {
+  animation: search-pulse 2s ease-in-out infinite;
+}
 
 @keyframes marquee {
   0% { transform: translateX(0); }

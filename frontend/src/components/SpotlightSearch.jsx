@@ -233,10 +233,10 @@ export default function SpotlightSearch({ isOpen, onClose }) {
       className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] px-4" 
       onClick={onClose}
     >
-      <div className="absolute inset-0 bg-black/25 backdrop-blur-md" />
+      <div className="absolute inset-0 bg-black/25 backdrop-blur-md animate-backdrop-in" />
       
       <div 
-        className="relative w-full max-w-2xl bg-white/80 backdrop-blur-3xl rounded-3xl shadow-[0_20px_70px_rgba(0,0,0,0.25)] border border-white/60 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="relative w-full max-w-2xl bg-white/80 backdrop-blur-3xl rounded-3xl shadow-[0_20px_70px_rgba(0,0,0,0.25)] border border-white/60 overflow-hidden animate-liquid-spotlight"
         onClick={e => e.stopPropagation()}
         style={{
           background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.75) 100%)',
@@ -245,7 +245,7 @@ export default function SpotlightSearch({ isOpen, onClose }) {
         }}
       >
         <div className="flex items-center gap-4 px-6 py-5 border-b border-gray-200/50">
-          <Search01Icon size={22} className="text-gray-400 flex-shrink-0" strokeWidth={2.5} />
+          <Search01Icon size={22} className="text-gray-400 flex-shrink-0 animate-search-pulse" strokeWidth={2.5} />
           <input
             ref={inputRef}
             type="text"
@@ -262,18 +262,19 @@ export default function SpotlightSearch({ isOpen, onClose }) {
         </div>
 
         {showBangHints && (
-          <div className="px-6 py-5">
+          <div className="px-6 py-5 animate-fade-in-up">
             <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
               Quick Commands
             </div>
             <div className="grid grid-cols-3 gap-2 mb-5">
-              {Object.entries(BANGS).map(([bang, config]) => {
+              {Object.entries(BANGS).map(([bang, config], idx) => {
                 const Icon = config.icon;
                 return (
                   <button
                     key={bang}
                     onClick={() => setState(s => ({ ...s, query: bang + " " }))}
-                    className="flex items-center gap-2.5 px-3 py-2.5 bg-white/60 hover:bg-white/90 rounded-xl border border-gray-200/60 transition-all hover:shadow-sm group"
+                    className="flex items-center gap-2.5 px-3 py-2.5 bg-white/60 hover:bg-white/90 rounded-xl border border-gray-200/60 transition-all hover:shadow-sm group animate-fade-in-up"
+                    style={{ animationDelay: `${idx * 50}ms` }}
                   >
                     <Icon size={18} className="text-gray-600 group-hover:text-blue-600 transition-colors" strokeWidth={2.5} />
                     <div className="flex-1 text-left">
@@ -289,22 +290,21 @@ export default function SpotlightSearch({ isOpen, onClose }) {
               Price Filters
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <div className="px-3 py-2 bg-white/40 rounded-xl border border-gray-200/60">
-                <div className="text-xs font-mono font-bold text-gray-900">!p laptop <500</div>
-                <div className="text-[10px] text-gray-500 mt-0.5">Less than ₹500</div>
-              </div>
-              <div className="px-3 py-2 bg-white/40 rounded-xl border border-gray-200/60">
-                <div className="text-xs font-mono font-bold text-gray-900">!p mouse >100</div>
-                <div className="text-[10px] text-gray-500 mt-0.5">Greater than ₹100</div>
-              </div>
-              <div className="px-3 py-2 bg-white/40 rounded-xl border border-gray-200/60">
-                <div className="text-xs font-mono font-bold text-gray-900">!p phone 100-500</div>
-                <div className="text-[10px] text-gray-500 mt-0.5">Range ₹100-₹500</div>
-              </div>
-              <div className="px-3 py-2 bg-white/40 rounded-xl border border-gray-200/60">
-                <div className="text-xs font-mono font-bold text-gray-900">!c creator_name</div>
-                <div className="text-[10px] text-gray-500 mt-0.5">Search creators</div>
-              </div>
+              {[
+                { text: "!p laptop <500", desc: "Less than ₹500" },
+                { text: "!p mouse >100", desc: "Greater than ₹100" },
+                { text: "!p phone 100-500", desc: "Range ₹100-₹500" },
+                { text: "!c creator_name", desc: "Search creators" }
+              ].map((item, idx) => (
+                <div 
+                  key={idx}
+                  className="px-3 py-2 bg-white/40 rounded-xl border border-gray-200/60 animate-fade-in-up"
+                  style={{ animationDelay: `${(idx + 3) * 50}ms` }}
+                >
+                  <div className="text-xs font-mono font-bold text-gray-900">{item.text}</div>
+                  <div className="text-[10px] text-gray-500 mt-0.5">{item.desc}</div>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -321,11 +321,12 @@ export default function SpotlightSearch({ isOpen, onClose }) {
               <button
                 key={item.id}
                 onClick={() => handleSelect(item)}
-                className={`w-full px-5 py-3.5 flex items-center gap-4 text-left transition-all ${
+                className={`w-full px-5 py-3.5 flex items-center gap-4 text-left transition-all animate-fade-in-up ${
                   i === selectedIndex 
                     ? "bg-blue-500/10 border-l-2 border-blue-500" 
                     : "hover:bg-black/[0.04] border-l-2 border-transparent"
                 }`}
+                style={{ animationDelay: `${i * 30}ms` }}
               >
                 <div className="w-14 h-14 flex-shrink-0 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center overflow-hidden shadow-sm">
                   {item.image ? (
@@ -360,7 +361,7 @@ export default function SpotlightSearch({ isOpen, onClose }) {
         )}
 
         {!loading && !results.length && query && !showBangHints && (
-          <div className="px-6 py-12 text-center">
+          <div className="px-6 py-12 text-center animate-fade-in-up">
             <div className="text-5xl mb-3">🔍</div>
             <p className="text-base font-medium text-gray-600">No results found</p>
             <p className="text-sm text-gray-400 mt-1">Try a different search term</p>

@@ -42,6 +42,16 @@ export default function NavBar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const handleClickOutsideMobile = (e) => {
+      if (mobileOpen && !e.target.closest('.mobile-menu-container')) {
+        setMobileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutsideMobile);
+    return () => document.removeEventListener("mousedown", handleClickOutsideMobile);
+  }, [mobileOpen]);
+
   const navLinks = [
     { label: "Browse", path: "/browse" },
     { label: "Sell", path: "/create-product", auth: true },
@@ -117,7 +127,7 @@ export default function NavBar() {
                   </button>
                   
                   {avatarDropdownOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-56 bg-white border-3 border-black shadow-[4px_4px_0px_var(--black)] z-50">
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-white border-3 border-black shadow-[4px_4px_0px_var(--black)] z-50 animate-liquid-dropdown">
                       <div className="px-4 py-3 border-b-3 border-black bg-[var(--pink-50)]">
                         <p className="font-bold truncate">{name || "User"}</p>
                         <p className="text-xs text-gray-500 uppercase">{role || "Customer"}</p>
@@ -178,86 +188,91 @@ export default function NavBar() {
                 </>
               )}
 
-              <button 
-                onClick={() => setMobileOpen(!mobileOpen)}
-                className="w-10 h-10 sm:w-12 sm:h-12 flex flex-col items-center justify-center gap-1.5 border-3 border-black bg-white"
-              >
-                <span className={`w-5 h-0.5 bg-black transition-transform ${mobileOpen ? "rotate-45 translate-y-2" : ""}`} />
-                <span className={`w-5 h-0.5 bg-black transition-opacity ${mobileOpen ? "opacity-0" : ""}`} />
-                <span className={`w-5 h-0.5 bg-black transition-transform ${mobileOpen ? "-rotate-45 -translate-y-2" : ""}`} />
-              </button>
+              <div className="mobile-menu-container relative">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMobileOpen(!mobileOpen);
+                  }}
+                  className="w-10 h-10 sm:w-12 sm:h-12 flex flex-col items-center justify-center gap-1.5 border-3 border-black bg-white hover:bg-[var(--yellow-400)] transition-colors relative overflow-hidden"
+                >
+                  <span className={`w-5 h-0.5 bg-black transition-all duration-300 ease-out ${mobileOpen ? "rotate-45 translate-y-2" : ""}`} />
+                  <span className={`w-5 h-0.5 bg-black transition-all duration-200 ${mobileOpen ? "opacity-0 scale-0" : "opacity-100 scale-100"}`} />
+                  <span className={`w-5 h-0.5 bg-black transition-all duration-300 ease-out ${mobileOpen ? "-rotate-45 -translate-y-2" : ""}`} />
+                </button>
+
+                {mobileOpen && (
+                  <div className="absolute top-full right-0 mt-2 w-64 bg-white border-3 border-black shadow-[4px_4px_0px_var(--black)] overflow-hidden animate-liquid-menu z-50">
+                    {navLinks.map((link) => {
+                      if (link.auth && !isAuthenticated) return null;
+                      if (link.admin && role !== 'admin') return null;
+                      return (
+                        <button
+                          key={link.path}
+                          onClick={() => navigate(link.path)}
+                          className={`w-full px-4 py-4 text-base font-bold uppercase text-left border-b-3 border-black transition-all ${
+                            isActive(link.path) ? "bg-[var(--yellow-400)]" : "hover:bg-[var(--yellow-400)]"
+                          }`}
+                        >
+                          {link.label}
+                        </button>
+                      );
+                    })}
+                    {isAuthenticated && (
+                      <>
+                        <button
+                          onClick={() => navigate("/dashboard")}
+                          className={`w-full px-4 py-4 text-base font-bold uppercase text-left border-b-3 border-black hover:bg-[var(--yellow-400)] ${
+                            isActive("/dashboard") ? "bg-[var(--yellow-400)]" : ""
+                          }`}
+                        >
+                          Dashboard
+                        </button>
+                        <button
+                          onClick={() => navigate("/settings/profile")}
+                          className={`w-full px-4 py-4 text-base font-bold uppercase text-left border-b-3 border-black hover:bg-[var(--yellow-400)] ${
+                            isActive("/settings/profile") ? "bg-[var(--yellow-400)]" : ""
+                          }`}
+                        >
+                          Edit Profile
+                        </button>
+                        <button
+                          onClick={() => navigate("/cart")}
+                          className={`w-full px-4 py-4 text-base font-bold uppercase text-left border-b-3 border-black hover:bg-[var(--yellow-400)] ${
+                            isActive("/cart") ? "bg-[var(--yellow-400)]" : ""
+                          }`}
+                        >
+                          Cart
+                        </button>
+                        <button
+                          onClick={() => { logout(); setMobileOpen(false); }}
+                          className="w-full px-4 py-4 text-base font-bold uppercase text-left hover:bg-red-100 text-red-600"
+                        >
+                          Logout
+                        </button>
+                      </>
+                    )}
+                    {!isAuthenticated && (
+                      <>
+                        <button
+                          onClick={() => navigate("/login")}
+                          className="w-full px-4 py-4 text-base font-bold uppercase text-left hover:bg-[var(--yellow-400)] border-b-3 border-black"
+                        >
+                          Sign In
+                        </button>
+                        <button
+                          onClick={() => navigate("/signup")}
+                          className="w-full px-4 py-4 text-base font-bold uppercase text-left bg-[var(--pink-500)] text-white"
+                        >
+                          Get Started
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-
-          {mobileOpen && (
-            <div className="bg-white border-3 border-black shadow-[4px_4px_0px_var(--black)] mb-4 overflow-hidden">
-              {navLinks.map((link) => {
-                if (link.auth && !isAuthenticated) return null;
-                if (link.admin && role !== 'admin') return null;
-                return (
-                  <button
-                    key={link.path}
-                    onClick={() => navigate(link.path)}
-                    className={`w-full px-4 py-4 text-base font-bold uppercase text-left border-b-3 border-black ${
-                      isActive(link.path) ? "bg-[var(--yellow-400)]" : "hover:bg-[var(--yellow-400)]"
-                    }`}
-                  >
-                    {link.label}
-                  </button>
-                );
-              })}
-              {isAuthenticated && (
-                <>
-                  <button
-                    onClick={() => navigate("/dashboard")}
-                    className={`w-full px-4 py-4 text-base font-bold uppercase text-left border-b-3 border-black hover:bg-[var(--yellow-400)] ${
-                      isActive("/dashboard") ? "bg-[var(--yellow-400)]" : ""
-                    }`}
-                  >
-                    Dashboard
-                  </button>
-                  <button
-                    onClick={() => navigate("/settings/profile")}
-                    className={`w-full px-4 py-4 text-base font-bold uppercase text-left border-b-3 border-black hover:bg-[var(--yellow-400)] ${
-                      isActive("/settings/profile") ? "bg-[var(--yellow-400)]" : ""
-                    }`}
-                  >
-                    Edit Profile
-                  </button>
-                  <button
-                    onClick={() => navigate("/cart")}
-                    className={`w-full px-4 py-4 text-base font-bold uppercase text-left border-b-3 border-black hover:bg-[var(--yellow-400)] ${
-                      isActive("/cart") ? "bg-[var(--yellow-400)]" : ""
-                    }`}
-                  >
-                    Cart
-                  </button>
-                  <button
-                    onClick={() => { logout(); setMobileOpen(false); }}
-                    className="w-full px-4 py-4 text-base font-bold uppercase text-left hover:bg-red-100 text-red-600"
-                  >
-                    Logout
-                  </button>
-                </>
-              )}
-              {!isAuthenticated && (
-                <>
-                  <button
-                    onClick={() => navigate("/login")}
-                    className="w-full px-4 py-4 text-base font-bold uppercase text-left hover:bg-[var(--yellow-400)] border-b-3 border-black"
-                  >
-                    Sign In
-                  </button>
-                  <button
-                    onClick={() => navigate("/signup")}
-                    className="w-full px-4 py-4 text-base font-bold uppercase text-left bg-[var(--pink-500)] text-white"
-                  >
-                    Get Started
-                  </button>
-                </>
-              )}
-            </div>
-          )}
         </div>
       </nav>
 
