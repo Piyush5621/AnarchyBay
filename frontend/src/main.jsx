@@ -5,6 +5,7 @@ import { Toaster } from 'sonner'
 import { queryClient } from './lib/tanstack/client.js'
 import './index.css'
 import App from './App.jsx'
+import { runPageTransition } from './utils/pageTransition.js'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -25,3 +26,9 @@ createRoot(document.getElementById('root')).render(
     </QueryClientProvider>
   </StrictMode>,
 )
+
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    runPageTransition();
+  }, 100);
+});

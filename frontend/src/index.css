@@ -350,3 +350,34 @@ body::-webkit-scrollbar-thumb {
   background: black;
   color: white;
 }
+
+/* Stairs Overlay Transition */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.stairs-wrap {
+  height: 100%;
+  width: 100%;
+  display: flex;
+}
+
+.stair {
+  height: 100%;
+  width: 20%;
+  background: #000;
+  border-right: 3px solid var(--black);
+}
+
+.stair:last-child {
+  border-right: none;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}

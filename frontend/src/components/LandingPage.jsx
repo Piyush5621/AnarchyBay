@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/use-auth";
 import NavBar from "./NavBar";
+import { MagicBento } from "./MagicBento";
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import { CreditCard, Zap, Key, BarChart3, Palette, Rocket } from 'lucide-react';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -150,13 +153,37 @@ function MarqueeSection() {
 }
 
 function FeaturesSection() {
-  const features = [
-    { icon: "💸", title: "UPI & Cards", desc: "Accept payments via UPI, cards, and net banking. INR pricing built-in.", color: "var(--pink-200)" },
-    { icon: "⚡", title: "Instant Delivery", desc: "Automatic file delivery. Customers get access immediately after payment.", color: "var(--yellow-400)" },
-    { icon: "🔐", title: "License Keys", desc: "Auto-generate unique license keys for software and digital products.", color: "var(--mint)" },
-    { icon: "📊", title: "Analytics", desc: "Track sales, revenue, and customer insights in real-time.", color: "var(--pink-300)" },
-    { icon: "🎨", title: "Custom Storefront", desc: "Beautiful product pages that convert. No coding required.", color: "var(--yellow-400)" },
-    { icon: "🚀", title: "Zero Fees", desc: "Start free. Only pay when you make sales. No hidden charges.", color: "var(--mint)" },
+  const cardData = [
+    {
+      title: 'UPI & Cards',
+      description: 'Accept payments via UPI, cards, and net banking. INR pricing built-in.',
+      icon: <CreditCard className="w-8 h-8" />
+    },
+    {
+      title: 'Instant Delivery',
+      description: 'Automatic file delivery. Customers get access immediately after payment.',
+      icon: <Zap className="w-8 h-8" />
+    },
+    {
+      title: 'Permanent Ownership',
+      description: 'Instant download access. Customers own their purchase forever.',
+      icon: <Key className="w-8 h-8" />
+    },
+    {
+      title: 'Analytics',
+      description: 'Track sales, revenue, and customer insights in real-time.',
+      icon: <BarChart3 className="w-8 h-8" />
+    },
+    {
+      title: 'Custom Storefront',
+      description: 'Beautiful product pages that convert. No coding required.',
+      icon: <Palette className="w-8 h-8" />
+    },
+    {
+      title: 'Zero Fees',
+      description: 'Start free. Only pay when you make sales. No hidden charges.',
+      icon: <Rocket className="w-8 h-8" />
+    }
   ];
 
   return (
@@ -166,21 +193,21 @@ function FeaturesSection() {
         <h2 className="text-4xl md:text-5xl font-black">Everything you need to sell</h2>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {features.map((f, i) => (
+      <div className="card-grid bento-section">
+        {cardData.map((card, index) => (
           <div
-            key={i}
-            className="bg-white border-3 border-black p-6 shadow-[4px_4px_0px_var(--black)] hover:translate-x-[-4px] hover:translate-y-[-4px] hover:shadow-[8px_8px_0px_var(--black)] transition-all group"
-            style={{ animationDelay: `${i * 0.1}s` }}
+            key={index}
+            className="magic-bento-card magic-bento-card--text-autohide magic-bento-card--border-glow particle-container relative group"
           >
-            <div 
-              className="w-16 h-16 flex items-center justify-center text-3xl border-3 border-black mb-4 group-hover:rotate-6 transition-transform"
-              style={{ background: f.color }}
-            >
-              {f.icon}
+            <div className="magic-bento-card__header relative z-10">
+              <div className="magic-bento-card__label group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 ease-out">
+                {card.icon}
+              </div>
             </div>
-            <h3 className="font-black text-xl mb-2">{f.title}</h3>
-            <p className="text-gray-600">{f.desc}</p>
+            <div className="magic-bento-card__content relative z-10">
+              <h2 className="magic-bento-card__title">{card.title}</h2>
+              <p className="magic-bento-card__description">{card.description}</p>
+            </div>
           </div>
         ))}
       </div>
@@ -258,33 +285,37 @@ function ProductsSection({ products, navigate }) {
 }
 
 function HowItWorksSection() {
-  const steps = [
-    { num: "01", title: "Create Product", desc: "Upload your files, set your price in INR, add a description.", icon: "📦" },
-    { num: "02", title: "Share Link", desc: "Get a beautiful product page. Share it anywhere.", icon: "🔗" },
-    { num: "03", title: "Get Paid", desc: "Customers pay via UPI/Card. Money hits your bank.", icon: "💰" },
-  ];
-
   return (
-    <section className="py-20 px-4 sm:px-6 max-w-7xl mx-auto">
+    <section className="py-20 px-4 sm:px-6 max-w-7xl mx-auto overflow-hidden">
       <div className="text-center mb-16">
-        <span className="inline-block px-4 py-2 bg-[var(--yellow-400)] border-3 border-black font-bold text-sm uppercase mb-4">Simple</span>
-        <h2 className="text-4xl md:text-5xl font-black">How it works</h2>
+        <h2 className="text-5xl md:text-7xl font-black mb-4 leading-tight">
+          You know all those great ideas you have?
+        </h2>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-8">
-        {steps.map((step, i) => (
-          <div key={i} className="relative">
-            {i < 2 && (
-              <div className="hidden md:block absolute top-12 left-full w-full h-1 bg-black z-0" style={{ width: "calc(100% - 3rem)" }} />
-            )}
-            <div className="relative bg-white border-3 border-black p-8 shadow-[6px_6px_0px_var(--black)]">
-              <div className="absolute -top-4 -left-4 w-12 h-12 bg-[var(--pink-500)] border-3 border-black flex items-center justify-center">
-                <span className="text-white font-black">{step.num}</span>
-              </div>
-              <div className="text-5xl mb-4 pt-4">{step.icon}</div>
-              <h3 className="font-black text-2xl mb-2">{step.title}</h3>
-              <p className="text-gray-600">{step.desc}</p>
-            </div>
+      <div className="relative max-w-5xl mx-auto flex items-center justify-center">
+        <img 
+          src="/howworks.png" 
+          alt="How BitShelf Works" 
+          className="w-full h-auto"
+          style={{ filter: 'drop-shadow(8px 8px 0px rgba(0, 0, 0, 0.1))' }}
+        />
+      </div>
+
+      <div className="mt-16 grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
+        {[
+          { title: "The Gumroad Way", desc: "Simple, powerful tools to sell your ideas", color: "var(--yellow-400)" },
+          { title: "Start Small", desc: "Launch in minutes, not months", color: "var(--pink-400)" },
+          { title: "Learn Quickly", desc: "Real feedback from real customers", color: "var(--purple)" },
+          { title: "Get Better Together", desc: "Iterate and improve your product", color: "var(--mint)" },
+        ].map((item, i) => (
+          <div key={i} className="bg-white border-3 border-black p-6 shadow-[4px_4px_0px_var(--black)]">
+            <div 
+              className="w-full h-2 mb-4" 
+              style={{ background: item.color }}
+            />
+            <h3 className="font-black text-xl mb-2">{item.title}</h3>
+            <p className="text-gray-600 text-sm">{item.desc}</p>
           </div>
         ))}
       </div>
