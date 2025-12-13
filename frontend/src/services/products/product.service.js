@@ -5,7 +5,7 @@ export const getProducts = async () => {
     '/api/products/list',
     {requireAuth: false}
   );
-  return data; // array of products
+  return data;
 }
 
 export const getTotalProducts = async () => {

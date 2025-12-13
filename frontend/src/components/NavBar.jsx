@@ -209,34 +209,7 @@ export default function NavBar() {
                   </button>
                 );
               })}
-              {isAuthenticated ? (
-                <>
-                  <button
-                    onClick={() => navigate("/cart")}
-                    className="w-full px-4 py-4 text-base font-bold uppercase text-left hover:bg-[var(--mint)] border-b-3 border-black"
-                  >
-                    Cart
-                  </button>
-                  <button
-                    onClick={() => navigate("/dashboard")}
-                    className="w-full px-4 py-4 text-base font-bold uppercase text-left hover:bg-[var(--yellow-400)] border-b-3 border-black"
-                  >
-                    Dashboard
-                  </button>
-                  <button
-                    onClick={() => navigate("/settings/profile")}
-                    className="w-full px-4 py-4 text-base font-bold uppercase text-left hover:bg-[var(--yellow-400)] border-b-3 border-black"
-                  >
-                    Edit Profile
-                  </button>
-                  <button
-                    onClick={logout}
-                    className="w-full px-4 py-4 text-base font-bold uppercase text-left hover:bg-red-100 text-red-600"
-                  >
-                    Logout
-                  </button>
-                </>
-              ) : (
+              {!isAuthenticated && (
                 <>
                   <button
                     onClick={() => navigate("/login")}
