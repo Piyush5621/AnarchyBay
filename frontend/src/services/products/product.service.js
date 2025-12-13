@@ -15,3 +15,11 @@ export const getTotalProducts = async () => {
   );
   return count || 0;
 }
+
+export const getMyProducts = async () => {
+  const data = await api.get(
+    '/api/products/my/list',
+    {requireAuth: true}
+  );
+  return data;
+}

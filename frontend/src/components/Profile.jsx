@@ -6,6 +6,7 @@ import NavBar from './NavBar';
 import { toast } from 'sonner';
 import { getAccessToken } from '@/lib/api/client';
 import { Link } from 'react-router-dom';
+import { getMyProducts } from '@/services/products/product.service';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -19,6 +20,8 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState('info');
   const [wishlistItems, setWishlistItems] = useState([]);
   const [loadingWishlist, setLoadingWishlist] = useState(false);
+  const [myProducts, setMyProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     username: '',
@@ -73,6 +76,41 @@ export default function Profile() {
       fetchWishlist();
     }
   }, [activeTab, isAuthenticated]);
+
+  useEffect(() => {
+    if (activeTab === 'products' && isAuthenticated && isSeller) {
+      fetchMyProducts();
+    }
+  }, [activeTab, isAuthenticated, isSeller]);
+
+  const fetchMyProducts = async () => {
+    setLoadingProducts(true);
+    try {
+      const data = await getMyProducts();
+      setMyProducts(data.products || []);
+    } catch {
+      toast.error('Failed to load your products');
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  const deleteProduct = async (productId) => {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+    try {
+      const token = getAccessToken();
+      const res = await fetch(`${API_URL}/api/products/${productId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to delete');
+      setMyProducts(prev => prev.filter(p => p.id !== productId));
+      toast.success('Product deleted');
+      productsQuery.refetch();
+    } catch {
+      toast.error('Failed to delete product');
+    }
+  };
 
   const fetchWishlist = async () => {
     setLoadingWishlist(true);
@@ -183,6 +221,14 @@ export default function Profile() {
                   >
                     Account Info
                   </button>
+                  {isSeller && (
+                    <button 
+                      onClick={() => setActiveTab('products')}
+                      className={`w-full py-3 font-bold text-left px-4 border-3 transition-all ${activeTab === 'products' ? 'bg-[var(--pink-500)] text-white border-black shadow-[3px_3px_0px_var(--black)]' : 'bg-white border-transparent hover:bg-[var(--pink-50)]'}`}
+                    >
+                      Your Products
+                    </button>
+                  )}
                   <button 
                     onClick={() => setActiveTab('wishlist')}
                     className={`w-full py-3 font-bold text-left px-4 border-3 transition-all ${activeTab === 'wishlist' ? 'bg-[var(--pink-500)] text-white border-black shadow-[3px_3px_0px_var(--black)]' : 'bg-white border-transparent hover:bg-[var(--pink-50)]'}`}
@@ -340,6 +386,84 @@ export default function Profile() {
                     </>
                   )}
                 </>
+              )}
+
+              {activeTab === 'products' && isSeller && (
+                <div className="bg-white border-3 border-black shadow-[6px_6px_0px_var(--black)] p-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-black">Your Products</h2>
+                    <Link
+                      to="/create-product"
+                      className="px-4 py-2 font-bold uppercase bg-[var(--mint)] text-black border-3 border-black shadow-[3px_3px_0px_var(--black)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_var(--black)] transition-all text-sm"
+                    >
+                      + New Product
+                    </Link>
+                  </div>
+                  
+                  {loadingProducts ? (
+                    <div className="space-y-4 animate-pulse">
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="h-24 bg-gray-200 border-3 border-black" />
+                      ))}
+                    </div>
+                  ) : myProducts.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="text-5xl mb-4">📦</div>
+                      <h3 className="font-black text-xl mb-2">No products yet</h3>
+                      <p className="text-gray-600 mb-6">Start selling by creating your first product</p>
+                      <Link
+                        to="/create-product"
+                        className="inline-block px-6 py-3 font-black uppercase bg-[var(--pink-500)] text-white border-3 border-black shadow-[4px_4px_0px_var(--black)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_var(--black)] transition-all"
+                      >
+                        Create Product
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {myProducts.map((product) => (
+                        <div key={product.id} className="border-3 border-black p-4 flex gap-4 bg-[var(--pink-50)]">
+                          <Link to={`/product/${product.id}`} className="w-20 h-20 flex-shrink-0 bg-white border-3 border-black overflow-hidden">
+                            {product.thumbnail_url ? (
+                              <img src={product.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-3xl">📦</div>
+                            )}
+                          </Link>
+                          <div className="flex-1 min-w-0">
+                            <Link to={`/product/${product.id}`} className="font-black text-lg hover:text-[var(--pink-500)] transition-colors line-clamp-1">
+                              {product.name}
+                            </Link>
+                            <p className="text-sm text-gray-600 line-clamp-1 mt-1">{product.short_description || product.description}</p>
+                            <div className="flex items-center justify-between mt-2">
+                              <div className="flex items-center gap-3">
+                                <span className="font-black text-lg text-[var(--pink-600)]">
+                                  {product.currency === 'INR' ? '₹' : '$'}{product.price || 0}
+                                </span>
+                                <span className={`px-2 py-0.5 text-xs font-bold uppercase border-2 border-black ${product.is_active ? 'bg-[var(--mint)]' : 'bg-gray-200'}`}>
+                                  {product.is_active ? 'Active' : 'Inactive'}
+                                </span>
+                              </div>
+                              <div className="flex gap-2">
+                                <Link
+                                  to={`/edit-product/${product.id}`}
+                                  className="px-3 py-1 font-bold text-sm uppercase bg-white text-black border-2 border-black hover:bg-[var(--yellow-400)] transition-colors"
+                                >
+                                  Edit
+                                </Link>
+                                <button
+                                  onClick={() => deleteProduct(product.id)}
+                                  className="px-3 py-1 font-bold text-sm uppercase bg-white text-red-600 border-2 border-black hover:bg-red-100 transition-colors"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
 
               {activeTab === 'wishlist' && (
