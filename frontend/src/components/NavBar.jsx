@@ -65,7 +65,7 @@ export default function NavBar() {
                 alt="AnarchyBay" 
                 className="w-8 h-8 sm:w-10 sm:h-10 border-2 border-black"
               />
-              <span className="font-display text-2xl sm:text-4xl text-black tracking-tight">
+              <span className="font-display text-2xl sm:text-4xl text-black tracking-tight italic">
                 AnarchyBay
               </span>
             </button>
@@ -102,20 +102,8 @@ export default function NavBar() {
                 <span className="hidden sm:inline text-sm font-bold">⌘K</span>
               </button>
 
-              {isAuthenticated && (
-                <button
-                  onClick={() => navigate("/cart")}
-                  className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border-3 border-black bg-white hover:bg-[var(--mint)] hover:shadow-[3px_3px_0px_var(--black)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all"
-                  title="Cart"
-                >
-                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                  </svg>
-                </button>
-              )}
-              
               {isAuthenticated ? (
-                <div className="relative" ref={dropdownRef}>
+                <div className="hidden lg:block relative" ref={dropdownRef}>
                   <button
                     onClick={() => setAvatarDropdownOpen(!avatarDropdownOpen)}
                     className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border-3 border-black bg-[var(--pink-100)] hover:shadow-[3px_3px_0px_var(--black)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all overflow-hidden"
@@ -153,6 +141,15 @@ export default function NavBar() {
                         Edit Profile
                       </button>
                       <button
+                        onClick={() => { navigate("/cart"); setAvatarDropdownOpen(false); }}
+                        className="w-full px-4 py-3 text-left font-bold uppercase text-sm hover:bg-[var(--yellow-400)] border-b-3 border-black flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                        </svg>
+                        Cart
+                      </button>
+                      <button
                         onClick={() => { logout(); setAvatarDropdownOpen(false); }}
                         className="w-full px-4 py-3 text-left font-bold uppercase text-sm hover:bg-red-100 text-red-600 flex items-center gap-2"
                       >
@@ -183,7 +180,7 @@ export default function NavBar() {
 
               <button 
                 onClick={() => setMobileOpen(!mobileOpen)}
-                className="lg:hidden w-10 h-10 sm:w-12 sm:h-12 flex flex-col items-center justify-center gap-1.5 border-3 border-black bg-white"
+                className="w-10 h-10 sm:w-12 sm:h-12 flex flex-col items-center justify-center gap-1.5 border-3 border-black bg-white"
               >
                 <span className={`w-5 h-0.5 bg-black transition-transform ${mobileOpen ? "rotate-45 translate-y-2" : ""}`} />
                 <span className={`w-5 h-0.5 bg-black transition-opacity ${mobileOpen ? "opacity-0" : ""}`} />
@@ -193,7 +190,7 @@ export default function NavBar() {
           </div>
 
           {mobileOpen && (
-            <div className="lg:hidden bg-white border-3 border-black shadow-[4px_4px_0px_var(--black)] mb-4 overflow-hidden">
+            <div className="bg-white border-3 border-black shadow-[4px_4px_0px_var(--black)] mb-4 overflow-hidden">
               {navLinks.map((link) => {
                 if (link.auth && !isAuthenticated) return null;
                 if (link.admin && role !== 'admin') return null;
@@ -201,7 +198,7 @@ export default function NavBar() {
                   <button
                     key={link.path}
                     onClick={() => navigate(link.path)}
-                    className={`w-full px-4 py-4 text-base font-bold uppercase text-left border-b-3 border-black last:border-b-0 ${
+                    className={`w-full px-4 py-4 text-base font-bold uppercase text-left border-b-3 border-black ${
                       isActive(link.path) ? "bg-[var(--yellow-400)]" : "hover:bg-[var(--yellow-400)]"
                     }`}
                   >
@@ -220,8 +217,24 @@ export default function NavBar() {
                     Dashboard
                   </button>
                   <button
+                    onClick={() => navigate("/settings/profile")}
+                    className={`w-full px-4 py-4 text-base font-bold uppercase text-left border-b-3 border-black hover:bg-[var(--yellow-400)] ${
+                      isActive("/settings/profile") ? "bg-[var(--yellow-400)]" : ""
+                    }`}
+                  >
+                    Edit Profile
+                  </button>
+                  <button
+                    onClick={() => navigate("/cart")}
+                    className={`w-full px-4 py-4 text-base font-bold uppercase text-left border-b-3 border-black hover:bg-[var(--yellow-400)] ${
+                      isActive("/cart") ? "bg-[var(--yellow-400)]" : ""
+                    }`}
+                  >
+                    Cart
+                  </button>
+                  <button
                     onClick={() => { logout(); setMobileOpen(false); }}
-                    className="w-full px-4 py-4 text-base font-bold uppercase text-left hover:bg-red-100 text-red-600 border-b-3 border-black"
+                    className="w-full px-4 py-4 text-base font-bold uppercase text-left hover:bg-red-100 text-red-600"
                   >
                     Logout
                   </button>
