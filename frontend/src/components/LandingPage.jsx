@@ -5,6 +5,8 @@ import NavBar from "./NavBar";
 import { MagicBento } from "./MagicBento";
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { CreditCard, Zap, Key, BarChart3, Palette, Rocket } from 'lucide-react';
+import { MacbookScroll } from "./ui/macbook-scroll";
+import HeroScrollDemo from "./container-scroll-animation-demo";
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -28,6 +30,7 @@ export default function LandingPage() {
         <FeaturesSection />
         <ProductsSection products={products} navigate={navigate} />
         <HowItWorksSection />
+        <MacbookScrollSection />
         <PricingSection navigate={navigate} isAuthenticated={isAuthenticated} />
         <CTASection navigate={navigate} isAuthenticated={isAuthenticated} />
       </main>
@@ -189,8 +192,16 @@ function FeaturesSection() {
   return (
     <section className="py-20 px-4 sm:px-6 max-w-7xl mx-auto">
       <div className="text-center mb-16">
-        <span className="inline-block px-4 py-2 bg-[var(--pink-200)] border-3 border-black font-bold text-sm uppercase mb-4">Features</span>
-        <h2 className="text-4xl md:text-5xl font-black">Everything you need to sell</h2>
+        <h1 className="text-4xl md:text-5xl font-bold text-black mb-4">
+          Everything you need to sell<br />
+          <span className="text-5xl md:text-[7rem] font-black mt-2 leading-none bg-gradient-to-r from-pink-400 via-pink-500 to-pink-600 bg-clip-text text-transparent">
+            Sell Anything
+          </span>
+        </h1>
+      </div>
+
+      <div className="mb-20">
+        <HeroScrollDemo />
       </div>
 
       <div className="card-grid bento-section">
@@ -217,7 +228,7 @@ function FeaturesSection() {
 
 function ProductsSection({ products, navigate }) {
   return (
-    <section className="py-20 bg-[var(--pink-100)] border-y-3 border-black">
+    <section className="py-20 bg-white border-y-3 border-black">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
           <div>
@@ -319,6 +330,30 @@ function HowItWorksSection() {
           </div>
         ))}
       </div>
+    </section>
+  );
+}
+
+function MacbookScrollSection() {
+  return (
+    <section className="bg-white">
+      <MacbookScroll
+        src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&q=80"
+        showGradient={false}
+        title={
+          <span className="font-black">
+            Beautiful product pages <br /> that convert visitors to customers
+          </span>
+        }
+      />
+    </section>
+  );
+}
+
+function ContainerScrollSection() {
+  return (
+    <section className="bg-white isolate">
+      <HeroScrollDemo />
     </section>
   );
 }
