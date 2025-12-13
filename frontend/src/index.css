@@ -186,6 +186,7 @@ body {
 .animate-bounce-subtle { animation: bounce-subtle 2s ease-in-out infinite; }
 .animate-slide-up { animation: slide-up 0.5s ease-out forwards; }
 .animate-spotlight-in { animation: spotlight-in 0.2s ease-out; }
+.animate-fade-in { animation: fade-in 0.15s ease-out; }
 
 @keyframes marquee {
   0% { transform: translateX(0); }
