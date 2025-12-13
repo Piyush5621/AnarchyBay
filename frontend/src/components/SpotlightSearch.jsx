@@ -204,7 +204,7 @@ export default function SpotlightSearch({ isOpen, onClose }) {
             value={query}
             onChange={e => setState(s => ({ ...s, query: e.target.value, selectedIndex: 0 }))}
             onKeyDown={handleKeyDown}
-            placeholder="Search products, categories, creators... (try ! for bangs)"
+            placeholder="Search products, sellers, categories... (Type ! for filters)"
             className="flex-1 py-5 text-lg font-medium bg-transparent outline-none"
           />
           <kbd className="hidden sm:flex items-center gap-1 px-2 py-1 text-xs font-bold bg-gray-100 border-2 border-gray-300 rounded">
@@ -289,9 +289,17 @@ export default function SpotlightSearch({ isOpen, onClose }) {
               </>
             ) : (
               <div className="px-4 py-8 text-center">
-                <div className="text-4xl mb-2">🔍</div>
-                <div className="font-bold">No results found</div>
-                <div className="text-sm text-gray-500">Try a different search or use bangs</div>
+                <div className="text-4xl mb-3">🔍</div>
+                <div className="font-bold text-lg mb-2">No results found</div>
+                <div className="text-sm text-gray-500 mb-4">
+                  Try different keywords or use search filters with <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-bold">!</kbd>
+                </div>
+                <button
+                  onClick={() => setState(s => ({ ...s, query: "!" }))}
+                  className="px-4 py-2 text-sm font-bold bg-[var(--pink-500)] text-white border-2 border-black hover:shadow-[2px_2px_0px_var(--black)] transition-all"
+                >
+                  View All Filters
+                </button>
               </div>
             )}
           </div>
@@ -311,18 +319,46 @@ export default function SpotlightSearch({ isOpen, onClose }) {
                 </button>
               ))}
             </div>
+            
+            <div className="mt-6 p-4 bg-[var(--pink-50)] border-2 border-[var(--pink-200)]">
+              <div className="text-xs font-bold uppercase text-gray-700 mb-2">💡 Search Tips</div>
+              <div className="space-y-1.5 text-sm text-gray-600">
+                <div className="flex items-start gap-2">
+                  <span className="font-bold text-[var(--pink-600)] flex-shrink-0">→</span>
+                  <span>Type any product name, description, or #tag</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-bold text-[var(--pink-600)] flex-shrink-0">→</span>
+                  <span>Use <kbd className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-xs font-bold">!</kbd> for advanced filters</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-bold text-[var(--pink-600)] flex-shrink-0">→</span>
+                  <span>Try <span className="font-bold">!c design</span> or <span className="font-bold">!p 500</span> for quick filtering</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-bold text-[var(--pink-600)] flex-shrink-0">→</span>
+                  <span>Press <kbd className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-xs font-bold">↵</kbd> to search all results</span>
+                </div>
+              </div>
+            </div>
+            
             <div className="mt-4 flex flex-wrap gap-2 text-xs text-gray-500">
-              <span className="font-bold">Bangs:</span>
+              <span className="font-bold">Popular Bangs:</span>
               {BANGS.slice(0, 3).map(b => (
                 <button 
                   key={b.bang} 
                   onClick={() => setState(s => ({ ...s, query: b.bang + " " }))}
-                  className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 hover:bg-[var(--pink-100)] transition-colors"
+                  className="px-2 py-1 bg-gray-100 border border-gray-300 hover:bg-[var(--pink-100)] hover:border-[var(--pink-300)] transition-colors font-bold"
                 >
                   {b.bang}
                 </button>
               ))}
-              <span>and more...</span>
+              <button 
+                onClick={() => setState(s => ({ ...s, query: "!" }))}
+                className="text-[var(--pink-600)] hover:text-[var(--pink-700)] font-bold"
+              >
+                view all →
+              </button>
             </div>
           </div>
         )}
