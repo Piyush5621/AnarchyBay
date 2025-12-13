@@ -8,6 +8,35 @@ const BANGS = {
   "!t": { type: "tags", label: "Tags", icon: TagIcon, endpoint: "/api/products/list" },
 };
 
+// Parse advanced search filters
+const parseFilters = (query) => {
+  const filters = { text: "", priceMin: null, priceMax: null };
+  
+  // Extract price filters: <500, >100, 100-500
+  const priceLessThan = query.match(/<(\d+)/);
+  const priceGreaterThan = query.match(/>(\d+)/);
+  const priceRange = query.match(/(\d+)-(\d+)/);
+  
+  if (priceLessThan) {
+    filters.priceMax = parseInt(priceLessThan[1]);
+    query = query.replace(/<(\d+)/, '').trim();
+  }
+  
+  if (priceGreaterThan) {
+    filters.priceMin = parseInt(priceGreaterThan[1]);
+    query = query.replace(/>(\d+)/, '').trim();
+  }
+  
+  if (priceRange) {
+    filters.priceMin = parseInt(priceRange[1]);
+    filters.priceMax = parseInt(priceRange[2]);
+    query = query.replace(/(\d+)-(\d+)/, '').trim();
+  }
+  
+  filters.text = query.trim();
+  return filters;
+};
+
 const initialState = { query: "", results: [], loading: false, selectedIndex: 0, activeBang: null };
 
 export default function SpotlightSearch({ isOpen, onClose }) {
@@ -39,7 +68,7 @@ export default function SpotlightSearch({ isOpen, onClose }) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  const fetchResults = useCallback(async (searchQuery, bangType) => {
+  const fetchResults = useCallback(async (searchQuery, bangType, filters) => {
     if (!searchQuery.trim() && !bangType) {
       setState(s => ({ ...s, results: [], loading: false }));
       return;
@@ -51,15 +80,31 @@ export default function SpotlightSearch({ isOpen, onClose }) {
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
       
       if (bangType === "products" || !bangType) {
-        const res = await fetch(
-          `${API_URL}/api/products/list?search=${encodeURIComponent(searchQuery)}&limit=8`
-        );
+        // Build query params with price filters
+        const params = new URLSearchParams({
+          search: searchQuery,
+          limit: '8'
+        });
+        
+        if (filters.priceMin !== null) params.append('minPrice', filters.priceMin);
+        if (filters.priceMax !== null) params.append('maxPrice', filters.priceMax);
+        
+        const res = await fetch(`${API_URL}/api/products/list?${params}`);
         const data = await res.json();
+        
+        // Client-side filtering if backend doesn't support price filters
+        let products = data.products || [];
+        if (filters.priceMin !== null) {
+          products = products.filter(p => p.price >= filters.priceMin);
+        }
+        if (filters.priceMax !== null) {
+          products = products.filter(p => p.price <= filters.priceMax);
+        }
         
         setState(s => ({
           ...s,
           loading: false,
-          results: (data.products || []).map(p => ({
+          results: products.map(p => ({
             type: "product",
             id: p.id,
             name: p.name,
@@ -134,8 +179,12 @@ export default function SpotlightSearch({ isOpen, onClose }) {
       bangType = null;
     }
 
+    // Parse filters for product searches
+    const filters = bangType === "products" || !bangType ? parseFilters(searchQuery) : { text: searchQuery };
+    searchQuery = filters.text;
+
     const timer = setTimeout(() => {
-      fetchResults(searchQuery, bangType);
+      fetchResults(searchQuery, bangType, filters);
     }, 300);
 
     return () => clearTimeout(timer);
@@ -213,11 +262,11 @@ export default function SpotlightSearch({ isOpen, onClose }) {
         </div>
 
         {showBangHints && (
-          <div className="px-6 py-5 border-b border-gray-200/30">
+          <div className="px-6 py-5">
             <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
               Quick Commands
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2 mb-5">
               {Object.entries(BANGS).map(([bang, config]) => {
                 const Icon = config.icon;
                 return (
@@ -234,6 +283,28 @@ export default function SpotlightSearch({ isOpen, onClose }) {
                   </button>
                 );
               })}
+            </div>
+            
+            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+              Price Filters
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="px-3 py-2 bg-white/40 rounded-xl border border-gray-200/60">
+                <div className="text-xs font-mono font-bold text-gray-900">!p laptop <500</div>
+                <div className="text-[10px] text-gray-500 mt-0.5">Less than ₹500</div>
+              </div>
+              <div className="px-3 py-2 bg-white/40 rounded-xl border border-gray-200/60">
+                <div className="text-xs font-mono font-bold text-gray-900">!p mouse >100</div>
+                <div className="text-[10px] text-gray-500 mt-0.5">Greater than ₹100</div>
+              </div>
+              <div className="px-3 py-2 bg-white/40 rounded-xl border border-gray-200/60">
+                <div className="text-xs font-mono font-bold text-gray-900">!p phone 100-500</div>
+                <div className="text-[10px] text-gray-500 mt-0.5">Range ₹100-₹500</div>
+              </div>
+              <div className="px-3 py-2 bg-white/40 rounded-xl border border-gray-200/60">
+                <div className="text-xs font-mono font-bold text-gray-900">!c creator_name</div>
+                <div className="text-[10px] text-gray-500 mt-0.5">Search creators</div>
+              </div>
             </div>
           </div>
         )}
