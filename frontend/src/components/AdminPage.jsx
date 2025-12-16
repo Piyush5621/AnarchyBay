@@ -437,13 +437,18 @@ export default function AdminPage() {
                             {/* Action */}
                             <td className="px-6 py-4">
                               <button
+                                disabled={!!msg.replied_at}
                                 onClick={() => {
                                   setReplyModal(msg);
                                   setReplyText("");
                                 }}
-                                className="px-4 py-2 font-bold text-sm bg-[var(--mint)] border-2 border-black"
+                                className={`px-4 py-2 font-bold text-sm border-2 border-black transition-all
+    ${msg.replied_at
+                                    ? "bg-gray-300 cursor-not-allowed"
+                                    : "bg-[var(--mint)] hover:shadow-[2px_2px_0px_var(--black)]"}
+  `}
                               >
-                                Reply
+                                {msg.replied_at ? "Replied" : "Reply"}
                               </button>
                             </td>
                           </tr>
