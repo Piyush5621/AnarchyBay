@@ -265,15 +265,30 @@ export default function AdminPage() {
                           <th className="px-6 py-4 text-left font-black uppercase">Actions</th>
                         </tr>
                       </thead>
+
                       <tbody>
                         {users.map((user) => (
-                          <tr key={user.id} className="border-b-2 border-gray-200 hover:bg-white">
-                            <td className="px-6 py-4 font-bold">{user.name || 'Anonymous'}</td>
-                            <td className="px-6 py-4 text-gray-600">{user.email}</td>
+                          <tr
+                            key={user.id}
+                            className="border-b-2 border-gray-200 hover:bg-white"
+                          >
+                            {/* Name */}
+                            <td className="px-6 py-4 font-bold">
+                              {user.name || "Anonymous"}
+                            </td>
+
+                            {/* Email */}
+                            <td className="px-6 py-4 text-gray-600">
+                              {user.email}
+                            </td>
+
+                            {/* Role */}
                             <td className="px-6 py-4">
                               <select
                                 value={user.role}
-                                onChange={(e) => updateUserRole(user.id, e.target.value)}
+                                onChange={(e) =>
+                                  updateUserRole(user.id, e.target.value)
+                                }
                                 className="px-3 py-2 font-bold border-2 border-black bg-white cursor-pointer"
                               >
                                 <option value="customer">Customer</option>
@@ -282,14 +297,18 @@ export default function AdminPage() {
                                 <option value="admin">Admin</option>
                               </select>
                             </td>
+
+                            {/* Joined */}
                             <td className="px-6 py-4 text-gray-600">
                               {new Date(user.created_at).toLocaleDateString()}
                             </td>
+
+                            {/* Actions */}
                             <td className="px-6 py-4">
                               <Link
-                                to={`/seller/${product.creator?.id}`}
+                                to={`/seller/${user.id}`}
                                 onClick={(e) => e.stopPropagation()}
-                                className="text-sm opacity-80 hover:opacity-100 hover:underline"
+                                className="text-sm font-bold opacity-80 hover:opacity-100 hover:underline"
                               >
                                 View
                               </Link>
@@ -301,6 +320,7 @@ export default function AdminPage() {
                   </div>
                 </div>
               )}
+
 
               {activeTab === "products" && (
                 <div className="bg-white border-3 border-black shadow-[6px_6px_0px_var(--black)] overflow-hidden">
@@ -438,7 +458,7 @@ export default function AdminPage() {
                                     ? "bg-gray-300 cursor-not-allowed opacity-60"
                                     : "bg-[var(--mint)] hover:shadow-[2px_2px_0px_var(--black)]"}
                                   `}
-                                >
+                              >
                                 {msg.replied_at ? "Replied" : "Reply"}
                               </button>
                             </td>
