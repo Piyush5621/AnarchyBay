@@ -136,8 +136,9 @@ router.delete("/products/:id", requireAuth, requireRole('admin'), async (req, re
 });
 
 // ================= CONTACT MESSAGES =================
+// Get all contact messages (Admin)
 router.get(
-  "/contact",
+  "/contact-messages",
   requireAuth,
   requireRole("admin"),
   async (req, res) => {
@@ -149,7 +150,10 @@ router.get(
 
       if (error) throw error;
 
-      return res.json({ messages: data || [] });
+      return res.json({
+        success: true,
+        messages: data || [],
+      });
     } catch (error) {
       console.error("Admin contact fetch error:", error);
       return res.status(500).json({
@@ -159,22 +163,23 @@ router.get(
   }
 );
 
-
-// Reply to contact message
+// Reply to a contact message (Admin)
 router.post(
-  "/contact/:id/reply",
+  "/contact-messages/:id/reply",
   requireAuth,
   requireRole("admin"),
   async (req, res) => {
-    const { replyMessage } = req.body;
     const { id } = req.params;
+    const { replyMessage } = req.body;
 
     if (!replyMessage) {
-      return res.status(400).json({ message: "Reply message required" });
+      return res.status(400).json({
+        message: "Reply message required",
+      });
     }
 
     try {
-      // Get contact message
+      // Fetch contact message
       const { data: msg, error } = await supabase
         .from("contact_messages")
         .select("*")
@@ -182,7 +187,9 @@ router.post(
         .single();
 
       if (error || !msg) {
-        return res.status(404).json({ message: "Message not found" });
+        return res.status(404).json({
+          message: "Message not found",
+        });
       }
 
       // Send email
@@ -194,20 +201,25 @@ router.post(
       });
 
       // Update DB
-      await supabase
+      const { error: updateError } = await supabase
         .from("contact_messages")
         .update({
-          replied_at: new Date(),
+          replied_at: new Date().toISOString(),
           reply_message: replyMessage,
         })
         .eq("id", id);
 
-      res.json({ message: "Reply sent successfully" });
+      if (updateError) throw updateError;
+
+      return res.json({
+        success: true,
+        message: "Reply sent successfully",
+      });
     } catch (err) {
       console.error("Reply error:", err);
-      res.status(500).json({ message: "Failed to send reply" });
+      return res.status(500).json({
+        message: "Failed to send reply",
+      });
     }
   }
 );
-
-export default router;

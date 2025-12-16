@@ -1,5 +1,5 @@
 import { submitContactService } from "../services/contact.service.js";
-
+import { getAllContactMessagesService } from "../services/contact.service.js";
 export const submitContactController = async (req, res) => {
   try {
     const { name, email, subject, message } = req.body;
@@ -30,6 +30,22 @@ export const submitContactController = async (req, res) => {
 
     return res.status(500).json({
       error: error?.message || "Failed to submit message",
+    });
+  }
+};
+
+export const getAllContactMessages = async (req, res) => {
+  try {
+    const messages = await getAllContactMessagesService();
+
+    return res.status(200).json({
+      success: true,
+      data: messages,
+    });
+  } catch (error) {
+    console.error("Fetch contact messages error:", error);
+    return res.status(500).json({
+      message: "Failed to fetch contact messages",
     });
   }
 };

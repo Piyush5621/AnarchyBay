@@ -29,7 +29,7 @@ import licenseRoutes from './routes/license.route.js';
 import analyticsRoutes from './routes/analytics.route.js';
 import payoutRoutes from './routes/payout.route.js';
 import webhookRoutes from './routes/webhook.route.js';
-import adminRoutes from './routes/admin.route.js';
+import adminRoutes from "./routes/admin.route.js";
 import reviewRoutes from './routes/review.route.js';
 import wishlistRoutes from './routes/wishlist.route.js';
 import cartRoutes from './routes/cart.route.js';
@@ -159,6 +159,7 @@ app.use('/api/reviews', rateLimiters.api, reviewRoutes);
 app.use('/api/wishlist', rateLimiters.api, wishlistRoutes);
 app.use('/api/cart', rateLimiters.api, cartRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/admin", adminRoutes);
 
 // 404 handler - must be after all routes
 app.use(notFoundHandler);
