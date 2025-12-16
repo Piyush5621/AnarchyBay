@@ -1,31 +1,35 @@
-import { submitContactService } from '../services/contact.service.js';
+import { submitContactService } from "../services/contact.service.js";
 
 export const submitContactController = async (req, res) => {
   try {
     const { name, email, subject, message } = req.body;
 
-    // Validation
+    // 🔒 Basic validation
     if (!name || !email || !message) {
       return res.status(400).json({
-        message: 'Name, email and message are required',
+        error: "Name, email and message are required",
       });
     }
 
-    const result = await submitContactService({
+    // 🧠 Call service
+    const data = await submitContactService({
       name,
       email,
-      subject,
+      subject: subject || null,
       message,
     });
 
     return res.status(201).json({
-      message: 'Message submitted successfully',
-      data: result,
+      success: true,
+      message: "Message submitted successfully",
+      data,
     });
   } catch (error) {
-    console.error(error);
+    // 🔥 VERY IMPORTANT: log full error
+    console.error("Contact Controller Error:", error);
+
     return res.status(500).json({
-      message: 'Failed to submit message',
+      error: error?.message || "Failed to submit message",
     });
   }
 };

@@ -1,13 +1,28 @@
-import { supabase } from '../lib/supabase.js';
+import { supabase } from "../lib/supabase.js";
 
-export const submitContactService = async ({ name, email, subject, message }) => {
+export const submitContactService = async ({
+  name,
+  email,
+  subject,
+  message,
+}) => {
   const { data, error } = await supabase
-    .from('contact_messages')
-    .insert([{ name, email, subject, message }])
+    .from("contact_messages")
+    .insert([
+      {
+        name,
+        email,
+        subject: subject || null, // ✅ important
+        message,
+      },
+    ])
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("Supabase contact insert error:", error);
+    throw new Error(error.message || "Failed to save contact message");
+  }
 
   return data;
 };
