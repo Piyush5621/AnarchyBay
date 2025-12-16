@@ -17,6 +17,7 @@ import ProfileSettings from './components/ProfileSettings.jsx';
 import AboutPage from './components/AboutPage.jsx';
 import CareersPage from './components/CareersPage.jsx';
 import HelpCenterPage from './components/HelpCenterPage.jsx';
+import Terms from './components/Terms.jsx';
 import { Toaster } from 'sonner';
 
 import "swiper/css";
@@ -26,6 +27,8 @@ import LoginPage from './components/auth/LoginPage.jsx';
 import AuthStatusPage from './components/auth/AuthStatusPage.jsx';
 import AuthCallbackPage from './components/auth/AuthCallbackPage.jsx';
 import VerifyEmailPage from './components/auth/VerifyEmailPage.jsx';
+import { Contact } from 'lucide-react';
+import Contacts from './components/Contacts.jsx';
 
 
 function App() {
@@ -57,6 +60,8 @@ function App() {
         <Route path='/download/:purchaseId' element={<DownloadPage />} />
         <Route path='/checkout/success' element={<CheckoutSuccessPage />} />
         <Route path="/help" element={<HelpCenterPage />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/contact" element={<Contacts />} />
 
       </Routes>
     </BrowserRouter>

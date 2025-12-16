@@ -15,6 +15,8 @@ export default function AdminPage() {
   const [users, setUsers] = useState([]);
   const [products, setProducts] = useState([]);
   const [dataLoading, setDataLoading] = useState(true);
+  const [contacts, setContacts] = useState([]);
+
 
   useEffect(() => {
     if (!loading && (!isAuthenticated || role !== 'admin')) {
@@ -27,7 +29,7 @@ export default function AdminPage() {
     if (role === 'admin') {
       fetchData();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role, activeTab]);
 
   const fetchData = async () => {
@@ -53,6 +55,14 @@ export default function AdminPage() {
         const productsData = await productsRes.json();
         if (productsRes.ok) setProducts(productsData.products || []);
       }
+      if (activeTab === "contacts") {
+        const res = await fetch(`${API_URL}/api/admin/contact-messages`, {
+          headers,
+        });
+        const data = await res.json();
+        if (res.ok) setContacts(data.messages || []);
+      }
+
     } catch {
       toast.error("Failed to fetch data");
     } finally {
@@ -65,7 +75,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(`${API_URL}/api/admin/users/${userId}/role`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
@@ -87,7 +97,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(`${API_URL}/api/admin/products/${productId}/featured`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
@@ -119,6 +129,38 @@ export default function AdminPage() {
     }
   };
 
+  const handleReply = async (msg) => {
+    const replyMessage = prompt(`Reply to ${msg.email}:`);
+
+    if (!replyMessage) return;
+
+    const token = getAccessToken();
+
+    try {
+      const res = await fetch(
+        `${API_URL}/api/admin/contact-messages/${msg.id}/reply`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ replyMessage }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message);
+
+      toast.success("Reply sent successfully ✉️");
+      fetchData();
+    } catch (err) {
+      toast.error(err.message || "Failed to send reply");
+    }
+  };
+
+
   if (loading || role !== 'admin') {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -142,15 +184,14 @@ export default function AdminPage() {
           </div>
 
           <div className="flex gap-4 mb-8 overflow-x-auto pb-2">
-            {["overview", "users", "products"].map((tab) => (
+            {["overview", "users", "products", "contacts"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-6 py-3 font-bold uppercase border-3 border-black transition-all whitespace-nowrap ${
-                  activeTab === tab
-                    ? "bg-[var(--pink-500)] text-white shadow-[4px_4px_0px_var(--black)]"
-                    : "bg-white hover:bg-[var(--pink-50)]"
-                }`}
+                className={`px-6 py-3 font-bold uppercase border-3 border-black transition-all whitespace-nowrap ${activeTab === tab
+                  ? "bg-[var(--pink-500)] text-white shadow-[4px_4px_0px_var(--black)]"
+                  : "bg-white hover:bg-[var(--pink-50)]"
+                  }`}
               >
                 {tab}
               </button>
@@ -288,19 +329,17 @@ export default function AdminPage() {
                             <td className="px-6 py-4">
                               <button
                                 onClick={() => toggleFeatured(product.id, product.is_featured)}
-                                className={`px-4 py-2 font-bold text-sm border-2 border-black transition-all ${
-                                  product.is_featured
-                                    ? "bg-[var(--yellow-400)]"
-                                    : "bg-white hover:bg-[var(--yellow-100)]"
-                                }`}
+                                className={`px-4 py-2 font-bold text-sm border-2 border-black transition-all ${product.is_featured
+                                  ? "bg-[var(--yellow-400)]"
+                                  : "bg-white hover:bg-[var(--yellow-100)]"
+                                  }`}
                               >
                                 {product.is_featured ? "★ Featured" : "☆ Feature"}
                               </button>
                             </td>
                             <td className="px-6 py-4">
-                              <span className={`px-3 py-1 text-xs font-bold uppercase border-2 border-black ${
-                                product.is_active ? "bg-green-200" : "bg-red-200"
-                              }`}>
+                              <span className={`px-3 py-1 text-xs font-bold uppercase border-2 border-black ${product.is_active ? "bg-green-200" : "bg-red-200"
+                                }`}>
                                 {product.is_active ? "Active" : "Inactive"}
                               </span>
                             </td>
@@ -319,6 +358,84 @@ export default function AdminPage() {
                                   Deactivate
                                 </button>
                               )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+              {activeTab === "contacts" && (
+                <div className="bg-white border-3 border-black shadow-[6px_6px_0px_var(--black)] overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-[var(--pink-100)] border-b-3 border-black">
+                        <tr>
+                          <th className="px-6 py-4 text-left font-black uppercase">Name</th>
+                          <th className="px-6 py-4 text-left font-black uppercase">Email</th>
+                          <th className="px-6 py-4 text-left font-black uppercase">Subject</th>
+                          <th className="px-6 py-4 text-left font-black uppercase">Message</th>
+                          <th className="px-6 py-4 text-left font-black uppercase">Status</th>
+                          <th className="px-6 py-4 text-left font-black uppercase">Date</th>
+                          <th className="px-6 py-4 text-left font-black uppercase">Action</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {contacts.length === 0 && (
+                          <tr>
+                            <td colSpan="7" className="px-6 py-10 text-center font-bold">
+                              No contact messages yet
+                            </td>
+                          </tr>
+                        )}
+
+                        {contacts.map((msg) => (
+                          <tr key={msg.id} className="border-b-2 border-gray-200 hover:bg-gray-50">
+                            {/* Name */}
+                            <td className="px-6 py-4 font-bold">{msg.name}</td>
+
+                            {/* Email */}
+                            <td className="px-6 py-4 text-gray-700">{msg.email}</td>
+
+                            {/* Subject */}
+                            <td className="px-6 py-4">{msg.subject || "-"}</td>
+
+                            {/* Message */}
+                            <td className="px-6 py-4 max-w-md">
+                              <p className="truncate" title={msg.message}>
+                                {msg.message}
+                              </p>
+                            </td>
+
+                            {/* Status */}
+                            <td className="px-6 py-4">
+                              {msg.replied_at ? (
+                                <span className="px-3 py-1 text-xs font-bold uppercase bg-green-200 border-2 border-black">
+                                  Replied
+                                </span>
+                              ) : (
+                                <span className="px-3 py-1 text-xs font-bold uppercase bg-yellow-200 border-2 border-black">
+                                  Pending
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Date */}
+                            <td className="px-6 py-4 text-gray-600">
+                              {new Date(msg.created_at).toLocaleString()}
+                            </td>
+
+                            {/* Action */}
+                            <td className="px-6 py-4">
+                              <button
+                                onClick={() => handleReply(msg)}
+                                className="px-4 py-2 font-bold text-sm bg-[var(--mint)] border-2 border-black
+                             hover:shadow-[2px_2px_0px_var(--black)] transition-all"
+                              >
+                                Reply
+                              </button>
                             </td>
                           </tr>
                         ))}

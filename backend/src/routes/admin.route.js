@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { supabase } from "../lib/supabase.js";
-
+import { transporter } from "../lib/mailer.js";
 const router = Router();
 
 router.get("/stats", requireAuth, requireRole('admin'), async (req, res) => {
@@ -134,5 +134,80 @@ router.delete("/products/:id", requireAuth, requireRole('admin'), async (req, re
     return res.status(500).json({ error: 'Failed to deactivate product' });
   }
 });
+
+// ================= CONTACT MESSAGES =================
+router.get(
+  "/contact-messages",
+  requireAuth,
+  requireRole("admin"),
+  async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from("contact_messages")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      return res.json({ messages: data || [] });
+    } catch (error) {
+      console.error("Admin contact fetch error:", error);
+      return res.status(500).json({
+        error: "Failed to fetch contact messages",
+      });
+    }
+  }
+);
+
+
+// Reply to contact message
+router.post(
+  "/contact-messages/:id/reply",
+  requireAuth,
+  requireRole("admin"),
+  async (req, res) => {
+    const { replyMessage } = req.body;
+    const { id } = req.params;
+
+    if (!replyMessage) {
+      return res.status(400).json({ message: "Reply message required" });
+    }
+
+    try {
+      // Get contact message
+      const { data: msg, error } = await supabase
+        .from("contact_messages")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error || !msg) {
+        return res.status(404).json({ message: "Message not found" });
+      }
+
+      // Send email
+      await transporter.sendMail({
+        from: `"AnarchyBay Support" <${process.env.SMTP_USER}>`,
+        to: msg.email,
+        subject: `Re: ${msg.subject || "Your message to AnarchyBay"}`,
+        text: replyMessage,
+      });
+
+      // Update DB
+      await supabase
+        .from("contact_messages")
+        .update({
+          replied_at: new Date(),
+          reply_message: replyMessage,
+        })
+        .eq("id", id);
+
+      res.json({ message: "Reply sent successfully" });
+    } catch (err) {
+      console.error("Reply error:", err);
+      res.status(500).json({ message: "Failed to send reply" });
+    }
+  }
+);
 
 export default router;

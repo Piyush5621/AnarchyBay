@@ -1,42 +1,54 @@
-// DEPENDENCIES
-import dotenv from 'dotenv';
-import { createClient } from '@supabase/supabase-js';
+// backend/src/lib/supabase.js
 
-// Load environment variables
+import dotenv from "dotenv";
+import { createClient } from "@supabase/supabase-js";
+
 dotenv.config();
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables:');
-  if (!supabaseUrl) console.error('  - SUPABASE_URL is not defined');
-  if (!supabaseAnonKey) console.error('  - SUPABASE_ANON_KEY is not defined');
+// ✅ Correct validation logic
+if (!supabaseUrl || (!supabaseAnonKey && !supabaseServiceKey)) {
+  console.error("❌ Missing Supabase environment variables:");
+
+  if (!supabaseUrl) console.error("  - SUPABASE_URL is not defined");
+  if (!supabaseAnonKey && !supabaseServiceKey) {
+    console.error(
+      "  - Neither SUPABASE_ANON_KEY nor SUPABASE_SERVICE_ROLE_KEY is defined"
+    );
+  }
+
   process.exit(1);
 }
 
-console.log("Supabase URL:", supabaseUrl ? "Loaded" : "Not Loaded");
-console.log("Supabase Anon Key:", supabaseAnonKey ? "Loaded (anon)" : "Not Loaded");
-console.log("Supabase Service Key:", supabaseServiceKey ? "Loaded (service)" : "Not Loaded");
+// Logs for debugging (safe)
+console.log("✅ Supabase URL loaded");
+console.log(
+  "🔑 Supabase Key:",
+  supabaseServiceKey ? "Service Role (server)" : "Anon (fallback)"
+);
 
-// Prefer service role key on server for authorized operations, fallback to anon key
+// ✅ Use service role key on backend if available
 const keyToUse = supabaseServiceKey || supabaseAnonKey;
+
+// Main client (used everywhere)
 export const supabase = createClient(supabaseUrl, keyToUse);
 
-// Admin client with service role key for auth operations
-export const supabaseAdmin = supabaseServiceKey 
+// Optional admin client (future use)
+export const supabaseAdmin = supabaseServiceKey
   ? createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
-        persistSession: false
-      }
+        persistSession: false,
+      },
     })
   : supabase;
 
+// Unified error helper
 export const handleSupabaseError = (res, error) => {
-    const status = error.status || 400;
-    return res.status(status).json({
-      error: error.message || "Authentication error",
-    });
-  };
+  return res.status(error?.status || 500).json({
+    message: error?.message || "Database error",
+  });
+};

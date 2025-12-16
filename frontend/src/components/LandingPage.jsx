@@ -1,12 +1,23 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react"; // Added useRef here
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/use-auth";
 import NavBar from "./NavBar";
 import { MagicBento } from "./MagicBento";
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
-import { CreditCard, Zap, Key, BarChart3, Palette, Rocket } from 'lucide-react';
 import { MacbookScroll } from "./ui/macbook-scroll";
-import HeroScrollDemo from "./container-scroll-animation-demo";
+// Removed conflicting import: import HeroScrollDemo from "./container-scroll-animation-demo"; 
+import { 
+  CreditCard, 
+  Zap, 
+  Box, 
+  BarChart3, 
+  Palette, 
+  Rocket, 
+  ShieldCheck, 
+  Globe, 
+  Key,
+  Star
+} from 'lucide-react';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -156,68 +167,103 @@ function MarqueeSection() {
 }
 
 function FeaturesSection() {
-  const cardData = [
+  const features = [
     {
-      title: 'UPI & Cards',
-      description: 'Accept payments via UPI, cards, and net banking. INR pricing built-in.',
-      icon: <CreditCard className="w-8 h-8" />
+      title: 'Global Payments',
+      description: 'Accept payments seamlessly via UPI, Credit Cards, and Net Banking. We handle the currency conversion so you don\'t have to.',
+      icon: <CreditCard className="w-6 h-6 text-white" />,
+      className: "md:col-span-2", // This card takes up 2 spaces
+      color: "bg-blue-500"
     },
     {
       title: 'Instant Delivery',
-      description: 'Automatic file delivery. Customers get access immediately after payment.',
-      icon: <Zap className="w-8 h-8" />
+      description: 'Your customers get their files immediately after payment. 24/7 automation.',
+      icon: <Zap className="w-6 h-6 text-white" />,
+      className: "md:col-span-1",
+      color: "bg-amber-500"
     },
     {
-      title: 'Permanent Ownership',
-      description: 'Instant download access. Customers own their purchase forever.',
-      icon: <Key className="w-8 h-8" />
+      title: 'Digital Ownership',
+      description: 'Secure, encrypted download links. Customers truly own what they buy.',
+      icon: <Box className="w-6 h-6 text-white" />,
+      className: "md:col-span-1",
+      color: "bg-emerald-500"
     },
     {
-      title: 'Analytics',
-      description: 'Track sales, revenue, and customer insights in real-time.',
-      icon: <BarChart3 className="w-8 h-8" />
+      title: 'Deep Analytics',
+      description: 'Track conversion rates, revenue sources, and customer geography in real-time.',
+      icon: <BarChart3 className="w-6 h-6 text-white" />,
+      className: "md:col-span-2", // This card takes up 2 spaces
+      color: "bg-purple-500"
     },
     {
-      title: 'Custom Storefront',
-      description: 'Beautiful product pages that convert. No coding required.',
-      icon: <Palette className="w-8 h-8" />
+      title: 'Zero-Code Store',
+      description: 'Drag, drop, and sell. Build a high-converting landing page in minutes without writing a single line of code.',
+      icon: <Palette className="w-6 h-6 text-white" />,
+      className: "md:col-span-1",
+      color: "bg-pink-500"
     },
     {
-      title: 'Zero Fees',
-      description: 'Start free. Only pay when you make sales. No hidden charges.',
-      icon: <Rocket className="w-8 h-8" />
+      title: 'Transparent Growth',
+      description: 'Start for free. No hidden fees, no monthly subscriptions. We only grow when you grow.',
+      icon: <Rocket className="w-6 h-6 text-white" />,
+      className: "md:col-span-2", // This card takes up 2 spaces
+      color: "bg-indigo-500"
     }
   ];
 
   return (
-    <section className="py-20 px-4 sm:px-6 max-w-7xl mx-auto">
-      <div className="text-center mb-16">
-        <h1 className="text-4xl md:text-5xl font-bold text-black mb-4">
-          Everything you need to sell<br />
-          <span className="text-5xl md:text-[7rem] font-black mt-2 leading-none bg-gradient-to-r from-pink-400 via-pink-500 to-pink-600 bg-clip-text text-transparent">
-            Sell Anything
+    <section className="relative py-24 px-4 sm:px-6 max-w-7xl mx-auto overflow-hidden">
+      {/* Background decoration to fix "Khali Khali" feel */}
+      <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-50"></div>
+      
+      <div className="text-center mb-20 max-w-3xl mx-auto">
+        <h2 className="text-lg font-semibold text-pink-600 tracking-wide uppercase mb-3">
+          Why Choose Us
+        </h2>
+        <h1 className="text-4xl md:text-6xl font-bold text-slate-900 tracking-tight mb-6">
+          Everything you need to <br />
+          <span className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent">
+            Sell Anything Online
           </span>
         </h1>
+        <p className="text-xl text-slate-600 leading-relaxed">
+          From payments to delivery, we handle the boring stuff so you can focus on creating.
+        </p>
       </div>
 
-      <div className="mb-20">
-        <HeroScrollDemo />
+      {/* Placeholder for your Scroll Demo */}
+      <div className="mb-24 rounded-2xl border border-slate-200 bg-slate-50/50 p-4 shadow-sm">
+         <HeroScrollDemo />
       </div>
 
-      <div className="card-grid bento-section">
-        {cardData.map((card, index) => (
-          <div
+      {/* Bento Grid Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {features.map((feature, index) => (
+          <div 
             key={index}
-            className="magic-bento-card magic-bento-card--text-autohide magic-bento-card--border-glow particle-container relative group"
+            className={`group relative p-8 bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-slate-200/80 transition-all duration-300 hover:-translate-y-1 overflow-hidden ${feature.className}`}
           >
-            <div className="magic-bento-card__header relative z-10">
-              <div className="magic-bento-card__label group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 ease-out">
-                {card.icon}
+            {/* Hover Gradient Effect */}
+            <div className={`absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 ${feature.color}`}></div>
+
+            <div className="relative z-10 flex flex-col h-full justify-between">
+              <div className="mb-6">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg mb-6 ${feature.color}`}>
+                  {feature.icon}
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900 mb-3">
+                  {feature.title}
+                </h3>
+                <p className="text-slate-600 leading-relaxed">
+                  {feature.description}
+                </p>
               </div>
-            </div>
-            <div className="magic-bento-card__content relative z-10">
-              <h2 className="magic-bento-card__title">{card.title}</h2>
-              <p className="magic-bento-card__description">{card.description}</p>
+              
+              {/* Optional Arrow indicator */}
+              <div className="flex items-center text-sm font-semibold text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
+                Learn more <span className="ml-1">→</span>
+              </div>
             </div>
           </div>
         ))}
@@ -225,6 +271,7 @@ function FeaturesSection() {
     </section>
   );
 }
+
 
 function ProductsSection({ products, navigate }) {
   return (
@@ -467,7 +514,7 @@ function Footer() {
           {[
             { title: "Product", links: [["Features", "#"], ["Pricing", "#"], ["API", "#"]] },
             { title: "Company", links: [["About", "/about"], ["Blog", "#"], ["Careers", "#"]] },
-            { title: "Support", links: [["Help Center", "/help"], ["Contact", "#"], ["Terms", "#"]] },
+            { title: "Support", links: [["Help Center", "/help"], ["Contact", "/contact"], ["Terms", "/terms"]] },
           ].map((col, i) => (
             <div key={i}>
               <h4 className="font-black text-sm uppercase mb-4">{col.title}</h4>
@@ -494,5 +541,105 @@ function Footer() {
         </div>
       </div>
     </footer>
+  );
+}
+
+export function HeroScrollDemo() {
+  const ref = useRef(null);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!ref.current) return;
+      const rect = ref.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      
+      // Calculate scroll progress (0 to 1)
+      const visible = Math.min(
+        Math.max((windowHeight - rect.top) / (windowHeight + rect.height), 0),
+        1
+      );
+      setProgress(visible);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    handleScroll(); // Init
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className="relative w-full h-[500px] md:h-[600px] flex items-center justify-center overflow-hidden py-10"
+    >
+      {/* Background Pattern */}
+      <div className="absolute inset-0 w-full h-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px] opacity-60" />
+
+      {/* Animated Container */}
+      <div
+        className="relative z-10 w-[90%] max-w-5xl"
+        style={{
+          transform: `perspective(1000px) rotateX(${20 - progress * 20}deg) scale(${0.8 + progress * 0.2})`,
+          opacity: 0.5 + progress * 0.5,
+          transition: "transform 0.1s linear, opacity 0.1s linear",
+        }}
+      >
+        {/* Mock Browser Window */}
+        <div className="bg-white rounded-xl border-3 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
+          
+          {/* Browser Header */}
+          <div className="flex items-center gap-2 px-4 py-3 bg-white border-b-3 border-black">
+            <div className="flex gap-2">
+              <span className="w-3 h-3 rounded-full bg-red-500 border border-black" />
+              <span className="w-3 h-3 rounded-full bg-yellow-400 border border-black" />
+              <span className="w-3 h-3 rounded-full bg-green-500 border border-black" />
+            </div>
+            <div className="flex-1 text-center">
+              <div className="inline-block px-3 py-1 bg-gray-100 border border-black rounded-md text-[10px] font-mono text-gray-500">
+                anarchybay.store/product/design-kit
+              </div>
+            </div>
+          </div>
+
+          {/* Browser Content (Split Layout) */}
+          <div className="grid md:grid-cols-5 h-[400px]">
+            
+            {/* Left: Product Details */}
+            <div className="md:col-span-3 p-8 flex flex-col justify-center border-b-3 md:border-b-0 md:border-r-3 border-black bg-white">
+               <div className="inline-block self-start px-3 py-1 bg-yellow-400 border-2 border-black text-xs font-black uppercase mb-4 rotate-[-2deg]">
+                 Best Seller
+               </div>
+               <h1 className="text-4xl font-black mb-2 text-slate-900 leading-tight">
+                 Ultimate <br/> Creator Pack
+               </h1>
+               <p className="text-slate-600 mb-6 font-medium">
+                 Everything you need to ship your next project. Icons, illustrations, and templates included.
+               </p>
+               
+               <div className="flex items-center gap-4 mt-auto">
+                 <div className="text-3xl font-black text-pink-600">₹2,999</div>
+                 <button className="flex-1 bg-black text-white py-3 px-6 font-bold uppercase border-2 border-black shadow-[4px_4px_0px_var(--pink-500)] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_var(--pink-500)] transition-all">
+                   I want this!
+                 </button>
+               </div>
+            </div>
+
+            {/* Right: Product Image */}
+            <div className="md:col-span-2 bg-pink-50 flex items-center justify-center p-8 relative overflow-hidden">
+               {/* Decorative Circle */}
+               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-purple-400 rounded-full blur-3xl opacity-50" />
+               
+               {/* 3D Icon */}
+               <div className="relative z-10 transform rotate-12 transition-transform hover:rotate-0 hover:scale-110 duration-500">
+                  <div className="w-40 h-40 bg-gradient-to-br from-yellow-400 to-orange-500 border-3 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] rounded-2xl flex items-center justify-center">
+                    <span className="text-6xl filter drop-shadow-md">🎨</span>
+                  </div>
+               </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
