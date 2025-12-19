@@ -1,4 +1,4 @@
-import { Cancel01Icon } from "hugeicons-react";
+import { X } from "lucide-react";
 
 export default function HelpDocs({ onClose }) {
   return (
@@ -15,7 +15,7 @@ export default function HelpDocs({ onClose }) {
             onClick={onClose}
             className="p-2 hover:bg-gray-100 transition-colors"
           >
-            <Cancel01Icon size={24} strokeWidth={2.5} />
+            <X size={24} strokeWidth={2.5} />
           </button>
         </div>
 

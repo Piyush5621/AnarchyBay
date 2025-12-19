@@ -8,7 +8,7 @@ export const createUserProfile = async ({ id, name, email, role }) => {
 export const getUserProfile = async ({ userId }) => {
     return await supabase
         .from("profiles")
-        .select("id, name, email, role, username, display_name, bio, preferred_payment_provider, stripe_customer_id, stripe_account_id, dodo_customer_id, dodo_merchant_id, profile_image_url, created_at, updated_at")
+        .select("id, name, email, role, username, display_name, bio, preferred_payment_provider, stripe_customer_id, stripe_account_id, profile_image_url, created_at, updated_at")
         .eq("id", userId)
         .single();
 }
@@ -52,7 +52,7 @@ export const updateUserProfile = async ({ userId, updates }) => {
         .from("profiles")
         .update(updateData)
         .eq("id", userId)
-        .select("id, name, email, role, username, display_name, bio, preferred_payment_provider, stripe_customer_id, stripe_account_id, dodo_customer_id, dodo_merchant_id, profile_image_url, created_at, updated_at")
+        .select("id, name, email, role, username, display_name, bio, preferred_payment_provider, stripe_customer_id, stripe_account_id, profile_image_url, created_at, updated_at")
         .single();
 }
 

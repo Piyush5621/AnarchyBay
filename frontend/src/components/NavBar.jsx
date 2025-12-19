@@ -117,10 +117,10 @@ export default function NavBar() {
                   navigate("/cart");
                   setAvatarDropdownOpen(false);
                 }}
-                className="w-full px-4 py-3 text-left font-bold uppercase text-sm hover:bg-[var(--yellow-400)] border-b-3 border-black flex items-center gap-2"
+                className="w-full p-1 font-bold uppercase text-sm text-black border-3 border-black flex items-center gap-2"
               >
-                <img src={cartIcon} alt="Cart" className="w-5 h-5" />
-                Cart
+                <img src={cartIcon} alt="Cart" className="w-9 h-9 bg-black" />
+  
               </button>
 
               {isAuthenticated ? (
@@ -136,7 +136,6 @@ export default function NavBar() {
                       <span className="text-lg font-bold">{(name || "U").charAt(0).toUpperCase()}</span>
                     )}
                   </button>
-
                   {avatarDropdownOpen && (
                     <div className="absolute right-0 top-full mt-2 w-56 bg-white border-3 border-black shadow-[4px_4px_0px_var(--black)] z-50 animate-liquid-dropdown">
                       <div className="px-4 py-3 border-b-3 border-black bg-[var(--pink-50)]">

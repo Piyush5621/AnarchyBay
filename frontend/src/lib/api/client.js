@@ -2,7 +2,7 @@ import { LOCALSTORAGE_KEYS } from "../../utils/constants.js";
 
 const { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } = LOCALSTORAGE_KEYS;
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
 if (!API_BASE_URL) {
   console.error(
     "❌ VITE_BACKEND_URL is not defined. Set it in Vercel Environment Variables."

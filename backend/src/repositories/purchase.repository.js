@@ -1,11 +1,18 @@
 import { supabase } from "../lib/supabase.js";
 
 export const createPurchase = async (purchaseData) => {
-  return await supabase
+  const result = await supabase
     .from("purchases")
     .insert(purchaseData)
     .select()
     .single();
+  
+  if (result.error) {
+    console.error("Error creating purchase:", result.error);
+    console.error("Data attempted:", purchaseData);
+  }
+  
+  return result;
 };
 
 export const updatePurchase = async (id, purchaseData) => {

@@ -9,6 +9,7 @@ import {
   removeFileAssociation,
   findFilesByProduct,
   findFilesByVariant,
+  findProductFilesByFileId,
 } from "../repositories/file.repository.js";
 import { findProductById } from "../repositories/product.repository.js";
 import { findVariantById } from "../repositories/variant.repository.js";

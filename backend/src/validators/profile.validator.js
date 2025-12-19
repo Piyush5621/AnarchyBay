@@ -16,11 +16,9 @@ export const updateProfileSchema = z.object({
       website: z.string().url().or(z.literal('')).optional(),
       github: z.string().url().or(z.literal('')).optional(),
     }).optional(),
-    preferred_payment_provider: z.enum(['stripe', 'dodo']).optional(),
+    preferred_payment_provider: z.enum(['stripe', 'razorpay']).optional(),
     stripe_customer_id: z.string().max(255).optional(),
     stripe_account_id: z.string().max(255).optional(),
-    dodo_customer_id: z.string().max(255).optional(),
-    dodo_merchant_id: z.string().max(255).optional(),
   }).refine(
     (data) => Object.keys(data).length > 0,
     { message: 'At least one field must be provided for update' }

@@ -1,6 +1,6 @@
 "use client";
 import React, { useRef } from "react";
-import { useScroll, useTransform, motion } from "framer-motion";
+import { useScroll, useTransform, motion } from "framer-motion"; // eslint-disable-line no-unused-vars
 
 export const ContainerScroll = ({
   titleComponent,

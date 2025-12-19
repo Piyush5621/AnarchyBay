@@ -14,13 +14,21 @@ export default defineConfig({
     },
   },
   server: {
-    // Allow the current ngrok host so Vite accepts proxied requests.
-    // Replace or add hosts as needed when the ngrok URL changes.
-    allowedHosts: ['87a5afbb1c52.ngrok-free.app'],
-    // Configure HMR to use secure websocket on the ngrok host.
-    hmr: {
+    // Allow ngrok hosts dynamically - matches any ngrok subdomain
+    allowedHosts: [
+      // Allow localhost for local development
+      'localhost',
+      '127.0.0.1',
+      // Allow any ngrok host (matches *.ngrok-free.app and *.ngrok.app)
+      /\.ngrok(?:-free)?\.app$/,
+      // Allow specific ngrok host if set via environment variable
+      ...(process.env.VITE_NGROK_HOST ? [process.env.VITE_NGROK_HOST] : []),
+    ],
+    // Configure HMR to use secure websocket when using ngrok
+    hmr: process.env.VITE_NGROK_HOST ? {
       protocol: 'wss',
-      host: '87a5afbb1c52.ngrok-free.app',
-    },
+      host: process.env.VITE_NGROK_HOST,
+      port: 443,
+    } : undefined,
   },
 })

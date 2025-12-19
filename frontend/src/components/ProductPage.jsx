@@ -4,15 +4,17 @@ import { useAuth } from "@/hooks/auth/use-auth";
 import NavBar from "./NavBar";
 import { toast } from "sonner";
 import { getAccessToken } from "@/lib/api/client";
+import { useRazorpay } from "react-razorpay";
 
 const COMMENT_CHAR_LIMIT = 500;
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
 function renderMarkdown(text) {
   if (!text) return "";
   let html = text
     .replace(/^### (.+)$/gm, "<h3 class='text-xl font-bold mt-4 mb-2'>$1</h3>")
-    .replace(/^## (.+)$/gm, "<h2 class='text-2xl font-bold mt-5 mb-2'>$1</h2>")
+    .replace(/^## (.+)$/gm, "<h2 class='text-2xl font-bold mt-5 mb-2'>$2</h2>")
     .replace(/^# (.+)$/gm, "<h1 class='text-3xl font-bold mt-6 mb-3'>$1</h1>")
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
@@ -29,80 +31,152 @@ export default function ProductPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
-
+  const [hasPurchased, setHasPurchased] = useState(false);
+  const [purchaseData, setPurchaseData] = useState(null);
+  const [checkingPurchase, setCheckingPurchase] = useState(true); // eslint-disable-line no-unused-vars
   const [product, setProduct] = useState(null);
+  const [variants, setVariants] = useState([]); // eslint-disable-line no-unused-vars
+  const [selectedVariant, setSelectedVariant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [buying, setBuying] = useState(false);
+  const [inWishlist, setInWishlist] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [reviewStats, setReviewStats] = useState({ avg: 0, count: 0, distribution: {} });
-  const [newReview, setNewReview] = useState({ rating: 5, comment: "" });
-  const [submittingReview, setSubmittingReview] = useState(false);
   const [userReview, setUserReview] = useState(null);
-  const [inWishlist, setInWishlist] = useState(false);
-  const [inCart, setInCart] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
+  const [inCart, setInCart] = useState(false);
+  const [newReview, setNewReview] = useState({ rating: 5, comment: "" });
   const [showDetailedPreview, setShowDetailedPreview] = useState(false);
 
-  useEffect(() => {
-    Promise.all([
-      fetch(`${API_URL}/api/products/${productId}`).then((r) => r.json()),
-      fetch(`${API_URL}/api/reviews/product/${productId}`).then((r) => r.json()),
-    ])
-      .then(([productData, reviewsData]) => {
-        setProduct(productData.product);
-        setReviews(reviewsData.reviews || []);
-        setReviewStats(reviewsData.stats || { avg: 0, count: 0, distribution: {} });
-        setLoading(false);
-      })
-      .catch(() => {
-        toast.error("Failed to load product");
-        setLoading(false);
-      });
-  }, [productId]);
+  const { Razorpay } = useRazorpay();
 
   useEffect(() => {
-    if (!isAuthenticated) return;
-    const token = getAccessToken();
-    Promise.all([
-      fetch(`${API_URL}/api/reviews/my/${productId}`, { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()),
-      fetch(`${API_URL}/api/wishlist/check/${productId}`, { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()),
-      fetch(`${API_URL}/api/cart/check/${productId}`, { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()),
-    ]).then(([reviewData, wishlistData, cartData]) => {
-      setUserReview(reviewData.review);
-      setInWishlist(wishlistData.inWishlist);
-      setInCart(cartData.inCart);
-    });
+    const checkUserPurchase = async () => {
+      if (isAuthenticated && productId) {
+        try {
+          const token = getAccessToken();
+          const res = await fetch(`${API_URL}/api/purchases/check/${productId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.hasPurchased) {
+            setHasPurchased(true);
+            setPurchaseData(data.purchase);
+          }
+        } catch (err) {
+          console.error("Error checking purchase:", err);
+        } finally {
+          setCheckingPurchase(false);
+        }
+      } else {
+        setCheckingPurchase(false);
+      }
+    };
+    
+    checkUserPurchase();
   }, [productId, isAuthenticated]);
 
-  const handleBuy = async () => {
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+      const res = await fetch(`${API_URL}/api/products/${productId}`);
+      const data = await res.json();
+      setProduct(data.product || data);
+      
+      const variantsRes = await fetch(`${API_URL}/api/products/${productId}/variants`);
+        const variantsData = await variantsRes.json();
+        setVariants(variantsData);
+        if (variantsData.length > 0) {
+          setSelectedVariant(variantsData[0]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch product:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [productId]);
+
+  const handleBuyNow = async () => {
     if (!isAuthenticated) {
-      toast.error("Please login to download");
       navigate("/login");
       return;
     }
-    if (!product?.files?.length) {
-      toast.error("No files available for download");
+
+    if (hasPurchased) {
+      navigate(`/download/${purchaseData.id}`);
       return;
     }
+
     setBuying(true);
     try {
       const token = getAccessToken();
-      for (const file of product.files) {
-        const response = await fetch(`${API_URL}/api/files/download/${file.id}`, { headers: { Authorization: `Bearer ${token}` } });
-        if (!response.ok) throw new Error("Download failed");
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = file.original_filename || file.filename;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }
-      toast.success("Download started!");
-    } catch {
-      toast.error("Failed to download. Please try again.");
+      const res = await fetch(`${API_URL}/api/purchases/checkout/razorpay`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          productId,
+          variantId: selectedVariant?.id,
+        }),
+      });
+
+      const orderData = await res.json();
+      if (!res.ok) throw new Error(orderData.error || "Failed to create order");
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: orderData.amount,
+        currency: orderData.currency,
+          name: "Anarchy Bay",
+          description: `Purchase of ${product.name}`,
+          image: "/favicon_io/android-chrome-512x512.png",
+          order_id: orderData.orderId,
+        handler: async (response) => {
+          try {
+            const verifyRes = await fetch(`${API_URL}/api/purchases/verify/razorpay`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+
+            if (verifyRes.ok) {
+              const verifyData = await verifyRes.json();
+              toast.success("Payment successful!");
+              navigate(`/checkout/success?purchase_id=${verifyData.purchase.id}`);
+            } else {
+              toast.error("Payment verification failed");
+            }
+          } catch (err) {
+            console.error(err);
+            toast.error("Error verifying payment");
+          }
+        },
+        prefill: {
+          name: user?.name,
+          email: user?.email,
+        },
+        theme: {
+          color: "#000000",
+        },
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      toast.error(err.message || "Payment failed");
     } finally {
       setBuying(false);
     }
@@ -463,11 +537,20 @@ export default function ProductPage() {
                 </button>
 
                 <button
-                  onClick={handleBuy}
+                  onClick={handleBuyNow}
                   disabled={buying}
-                  className="w-full py-5 text-xl font-bold uppercase border-3 border-black bg-white shadow-[4px_4px_0px_var(--black)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_var(--black)] transition-all mb-6 disabled:opacity-50"
+                  className="w-full py-5 font-black text-xl uppercase italic bg-[var(--pink-500)] text-white border-4 border-black shadow-[6px_6px_0px_var(--black)] hover:translate-x-[-3px] hover:translate-y-[-3px] hover:shadow-[9px_9px_0px_var(--black)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[4px_4px_0px_var(--black)] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                 >
-                  {buying ? "Downloading..." : "Download Now"}
+                  {buying ? (
+                    <>
+                      <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Processing...
+                    </>
+                  ) : hasPurchased ? (
+                    "Download Files"
+                  ) : (
+                    `Buy Now • ${product.currency === "INR" ? "₹" : "$"}${selectedVariant ? selectedVariant.price : product.price}`
+                  )}
                 </button>
 
                 <div className="flex gap-3">

@@ -49,7 +49,7 @@ export default function SpotlightSearch({ isOpen, onClose }) {
 
   useEffect(() => {
     if (isOpen) {
-      setState(initialState);
+      setState((prevState) => ({ ...prevState, ...initialState })); // eslint-disable-line react-hooks/set-state-in-effect
       const timer = setTimeout(() => inputRef.current?.focus(), 10);
       return () => clearTimeout(timer);
     }
@@ -168,7 +168,7 @@ export default function SpotlightSearch({ isOpen, onClose }) {
         bangType = config.type;
         searchQuery = query.slice(bang.length + 1).trim();
         if (activeBang !== bangType) {
-          setState(s => ({ ...s, activeBang: bangType }));
+          setState((s) => ({ ...s, activeBang: bangType })); // eslint-disable-line react-hooks/set-state-in-effect
         }
         break;
       }

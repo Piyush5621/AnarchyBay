@@ -62,7 +62,9 @@ export default function Dashboard() {
       const token = getAccessToken();
       await fetch(`${API_URL}/api/wishlist/${productId}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
       setWishlist(prev => prev.filter(item => item.product_id !== productId));
-    } catch {}
+    } catch {
+      // Silently handle errors
+    }
   };
 
   const addToCart = async (productId) => {
@@ -73,7 +75,9 @@ export default function Dashboard() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ productId }),
       });
-    } catch {}
+    } catch {
+      // Silently handle errors
+    }
   };
 
   const stats = {

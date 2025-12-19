@@ -1,14 +1,17 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/use-auth";
 import NavBar from "./NavBar";
-import { getAccessToken } from "@/lib/api/client";
+import { getMyPurchases } from "@/services/purchase.service";
+import { motion, AnimatePresence } from "framer-motion"; // eslint-disable-line no-unused-vars
+import { Download, ExternalLink, ShoppingBag, Library, Search, Loader2, Package } from "lucide-react";
 
 export default function MyLibrary() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [purchases, setPurchases] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -16,110 +19,153 @@ export default function MyLibrary() {
       return;
     }
 
-    const token = getAccessToken();
-    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/purchases/my-purchases`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => res.json())
-      .then(data => {
-        setPurchases(data.purchases || []);
+    const fetchData = async () => {
+      try {
+        const response = await getMyPurchases();
+        setPurchases(response.purchases || []);
+      } catch (error) {
+        console.error("Failed to fetch purchases:", error);
+      } finally {
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      }
+    };
+
+    fetchData();
   }, [isAuthenticated, navigate]);
+
+  const filteredPurchases = purchases.filter(p => 
+    p.products?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-white">
       <NavBar />
 
-      <main className="pt-24 pb-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="mb-10">
-            <span className="inline-block px-4 py-2 bg-[var(--mint)] border-3 border-black font-bold text-sm uppercase mb-4">
-              My Library
-            </span>
-            <h1 className="text-4xl md:text-5xl font-black mb-2">
-              Your <span className="text-[var(--pink-500)]">Purchases</span>
-            </h1>
-            <p className="text-xl text-gray-600">Access and download your purchased products.</p>
-          </div>
+      <main className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <header className="mb-12">
+          <motion.div 
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            className="flex flex-col md:flex-row md:items-end justify-between gap-6"
+          >
+            <div>
+              <span className="inline-block px-4 py-2 bg-[var(--mint)] border-3 border-black font-black text-sm uppercase mb-4 shadow-[4px_4px_0px_black]">
+                Library
+              </span>
+              <h1 className="text-5xl md:text-6xl font-black uppercase italic tracking-tighter">
+                YOUR <span className="text-[var(--pink-500)]">ASSETS</span>
+              </h1>
+              <p className="text-xl text-gray-500 font-bold mt-2">Manage and download your purchased collections.</p>
+            </div>
 
-          {loading ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="bg-white border-3 border-black shadow-[4px_4px_0px_var(--black)] animate-pulse">
-                  <div className="aspect-video bg-gray-200 border-b-3 border-black" />
-                  <div className="p-5 space-y-3">
-                    <div className="h-6 bg-gray-200 w-3/4" />
-                    <div className="h-4 bg-gray-200 w-full" />
-                  </div>
-                </div>
-              ))}
+            <div className="relative w-full md:w-80">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input 
+                type="text"
+                placeholder="Search your library..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-4 bg-white border-3 border-black shadow-[4px_4px_0px_black] font-bold focus:translate-x-[-2px] focus:translate-y-[-2px] focus:shadow-[6px_6px_0px_black] transition-all outline-none"
+              />
             </div>
-          ) : purchases.length === 0 ? (
-            <div className="bg-white border-3 border-black shadow-[6px_6px_0px_var(--black)] p-12 text-center">
-              <div className="text-7xl mb-6">📚</div>
-              <h2 className="text-3xl font-black mb-4">Your library is empty</h2>
-              <p className="text-xl text-gray-600 mb-8 max-w-md mx-auto">
-                Products you purchase will appear here. Browse the marketplace to find something awesome!
-              </p>
-              <button
-                onClick={() => navigate("/browse")}
-                className="px-8 py-4 font-black text-lg uppercase bg-[var(--pink-500)] text-white border-3 border-black shadow-[6px_6px_0px_var(--black)] hover:translate-x-[-3px] hover:translate-y-[-3px] hover:shadow-[9px_9px_0px_var(--black)] transition-all"
-              >
-                Browse Products
-              </button>
+          </motion.div>
+        </header>
+
+        {loading ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-white border-4 border-black shadow-[8px_8px_0px_var(--black)] p-4 animate-pulse">
+                <div className="aspect-video bg-gray-100 border-2 border-black mb-4" />
+                <div className="h-6 bg-gray-100 w-3/4 mb-2" />
+                <div className="h-4 bg-gray-100 w-1/2" />
+              </div>
+            ))}
+          </div>
+        ) : filteredPurchases.length === 0 ? (
+          <motion.div 
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white border-4 border-black shadow-[12px_12px_0px_var(--black)] p-16 text-center"
+          >
+            <div className="w-24 h-24 bg-[var(--pink-50)] border-4 border-black rounded-full flex items-center justify-center mx-auto mb-8 shadow-[6px_6px_0px_black]">
+              <Package className="w-12 h-12 text-black" />
             </div>
-          ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {purchases.map((purchase) => (
-                <div
+            <h2 className="text-4xl font-black mb-4 uppercase italic">No Assets Found</h2>
+            <p className="text-xl text-gray-500 mb-10 max-w-md mx-auto font-bold">
+              {searchQuery ? `No results for "${searchQuery}"` : "Your library is empty. Start your collection today!"}
+            </p>
+            <button
+              onClick={() => navigate("/browse")}
+              className="px-10 py-5 font-black text-xl uppercase italic bg-[var(--pink-500)] text-white border-4 border-black shadow-[8px_8px_0px_var(--black)] hover:translate-x-[-3px] hover:translate-y-[-3px] hover:shadow-[11px_11px_0px_var(--black)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[4px_4px_0px_var(--black)] transition-all flex items-center justify-center gap-3 mx-auto"
+            >
+              <ShoppingBag className="w-6 h-6" /> Explore Marketplace
+            </button>
+          </motion.div>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <AnimatePresence>
+              {filteredPurchases.map((purchase, idx) => (
+                <motion.div
                   key={purchase.id}
-                  className="bg-white border-3 border-black shadow-[4px_4px_0px_var(--black)] hover:translate-x-[-4px] hover:translate-y-[-4px] hover:shadow-[8px_8px_0px_var(--black)] transition-all"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="group bg-white border-4 border-black shadow-[8px_8px_0px_var(--black)] hover:translate-x-[-4px] hover:translate-y-[-4px] hover:shadow-[12px_12px_0px_var(--black)] transition-all overflow-hidden flex flex-col"
                 >
-                  <div className="aspect-video bg-[var(--pink-50)] border-b-3 border-black flex items-center justify-center overflow-hidden">
-                    {purchase.product?.thumbnail_url ? (
+                  <div className="aspect-video bg-[var(--pink-50)] border-b-4 border-black relative overflow-hidden shrink-0">
+                    {purchase.products?.thumbnail_url ? (
                       <img 
-                        src={purchase.product.thumbnail_url} 
-                        alt={purchase.product?.name}
-                        className="w-full h-full object-cover"
+                        src={purchase.products.thumbnail_url} 
+                        alt={purchase.products?.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
-                      <span className="text-6xl">📦</span>
+                      <div className="w-full h-full flex items-center justify-center text-6xl">
+                        <Package className="w-20 h-20 text-black/10" />
+                      </div>
                     )}
-                  </div>
-                  <div className="p-5">
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {purchase.product?.category?.slice(0, 2).map((cat, j) => (
-                        <span key={j} className="px-3 py-1 text-xs font-bold uppercase bg-[var(--mint)] border-2 border-black">
-                          {cat}
-                        </span>
-                      ))}
+                    <div className="absolute top-4 right-4">
+                      <span className="bg-black text-white px-3 py-1 font-black text-[10px] uppercase tracking-widest shadow-[2px_2px_0px_var(--pink-500)]">
+                        Purchased
+                      </span>
                     </div>
-                    <h3 className="font-black text-xl mb-2">{purchase.product?.name}</h3>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Purchased on {new Date(purchase.created_at).toLocaleDateString()}
-                    </p>
-                    <div className="flex gap-3">
+                  </div>
+
+                  <div className="p-6 flex-1 flex flex-col">
+                    <div className="flex-1">
+                      <h3 className="font-black text-2xl mb-2 line-clamp-1 group-hover:text-[var(--pink-500)] transition-colors">
+                        {purchase.products?.name}
+                      </h3>
+                      <p className="text-xs font-black uppercase text-gray-400 tracking-wider mb-4">
+                        Acquired on {new Date(purchase.purchased_at || purchase.created_at).toLocaleDateString(undefined, {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                    </div>
+
+                    <div className="flex gap-4 pt-4 mt-auto border-t-2 border-dashed border-gray-100">
                       <button
                         onClick={() => navigate(`/download/${purchase.id}`)}
-                        className="flex-1 py-3 font-bold uppercase bg-[var(--pink-500)] text-white border-3 border-black shadow-[3px_3px_0px_var(--black)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[5px_5px_0px_var(--black)] transition-all"
+                        className="flex-1 py-4 font-black uppercase italic bg-[var(--mint)] border-3 border-black shadow-[4px_4px_0px_var(--black)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_var(--black)] transition-all flex items-center justify-center gap-2"
                       >
-                        Download
+                        <Download className="w-5 h-5" /> Download
                       </button>
                       <button
                         onClick={() => navigate(`/product/${purchase.product_id}`)}
-                        className="py-3 px-4 font-bold uppercase border-3 border-black hover:bg-[var(--pink-50)] transition-colors"
+                        className="p-4 font-black border-3 border-black hover:bg-gray-50 transition-colors flex items-center justify-center"
+                        title="View Product Page"
                       >
-                        View
+                        <ExternalLink className="w-5 h-5" />
                       </button>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
-            </div>
-          )}
-        </div>
+            </AnimatePresence>
+          </div>
+        )}
       </main>
     </div>
   );
