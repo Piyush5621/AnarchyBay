@@ -77,3 +77,10 @@ export const findFilesByVariant = async (variantId) => {
     .select("file_id, files(*)")
     .eq("variant_id", variantId);
 };
+
+export const findProductFilesByFileId = async (fileId) => {
+  return await supabase
+    .from("product_files")
+    .select("*")
+    .eq("file_id", fileId);
+};

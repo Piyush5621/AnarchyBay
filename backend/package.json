@@ -21,7 +21,6 @@
     "bcryptjs": "^3.0.3",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
-    "dodopayments": "^2.8.0",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "helmet": "^7.1.0",
@@ -30,6 +29,7 @@
     "multer": "2.0.2",
     "pino": "^8.17.2",
     "pino-http": "^9.0.0",
+    "razorpay": "^2.9.6",
     "uuid": "^9.0.1",
     "zod": "^3.22.4"
   }

@@ -38,7 +38,7 @@ export const findVariantsByProduct = async (productId) => {
     .select("*")
     .eq("product_id", productId)
     .eq("is_active", true)
-    .order("sort_order", { ascending: true });
+    .order("name", { ascending: true });
 };
 
 export const deactivateVariant = async (id) => {

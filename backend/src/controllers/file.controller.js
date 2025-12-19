@@ -143,7 +143,7 @@ export const getProductFilesController = async (req, res) => {
 
 export const downloadFileController = async (req, res) => {
   try {
-    const { data, error } = await getFileDownloadUrl(req.params.id);
+    const { data, error } = await getFileDownloadUrl(req.user.id, req.params.id);
     if (error) {
       return res.status(error.status || 404).json({ error: error.message });
     }

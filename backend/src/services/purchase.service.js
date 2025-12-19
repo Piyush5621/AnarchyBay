@@ -11,6 +11,7 @@ import {
 import { findProductById } from "../repositories/product.repository.js";
 import { findVariantById } from "../repositories/variant.repository.js";
 import { generateLicenseKey, calculatePlatformFee } from "../lib/license.js";
+import { supabase } from "../lib/supabase.js";
 
 export const createPurchase = async (purchaseData) => {
   const { data: product, error: productError } = await findProductById(purchaseData.productId);
@@ -44,7 +45,7 @@ export const createPurchase = async (purchaseData) => {
     variant_id: purchaseData.variantId || null,
     payment_provider: purchaseData.paymentProvider,
     stripe_payment_intent_id: purchaseData.stripePaymentIntentId || null,
-    dodo_transaction_id: purchaseData.dodoTransactionId || null,
+    razorpay_order_id: purchaseData.razorpayOrderId || null,
     amount: finalAmount,
     currency: product.currency,
     platform_fee: platformFee,
@@ -74,6 +75,19 @@ export const refundPurchase = async (purchaseId) => {
 
 export const getPurchase = async (purchaseId) => {
   return await findPurchaseById(purchaseId);
+};
+
+export const getPurchasesByOrder = async (orderId) => {
+  const { data, error } = await supabase
+    .from("purchases")
+    .select(`
+      *,
+      products(*)
+    `)
+    .eq("razorpay_order_id", orderId)
+    .eq("status", "completed");
+  
+  return { data, error };
 };
 
 export const getPurchaseByLicense = async (licenseKey) => {
