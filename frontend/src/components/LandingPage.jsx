@@ -7,7 +7,6 @@ import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { CreditCard, Zap, Key, BarChart3, Palette, Rocket } from 'lucide-react';
 import { MacbookScroll } from "./ui/macbook-scroll";
 import HeroScrollDemo from "./container-scroll-animation-demo";
-import { LaserFlow } from "./ui/LaserFlow";
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -25,9 +24,9 @@ export default function LandingPage() {
     <div className="min-h-screen bg-white">
       <NavBar />
 
-      <main className="pt-20">
-        <HeroSection navigate={navigate} isAuthenticated={isAuthenticated} />
-        <MarqueeSection />
+        <main className="pt-20">
+          <HeroSection navigate={navigate} isAuthenticated={isAuthenticated} />
+          <MarqueeSection />
         <FeaturesSection />
         <ProductsSection products={products} navigate={navigate} />
         <HowItWorksSection />
@@ -44,13 +43,13 @@ export default function LandingPage() {
 function HeroSection({ navigate, isAuthenticated }) {
   return (
     <section className="relative overflow-hidden py-12 md:py-20">
-      <div className="absolute inset-0 pattern-dots opacity-30" />
+      <div className="absolute inset-0 pattern-dots opacity-20 pointer-events-none z-[1]" />
       
-      <div className="absolute top-20 right-10 w-32 h-32 bg-[var(--pink-300)] border-3 border-black rotate-12 animate-float hidden lg:block" />
-      <div className="absolute bottom-20 left-10 w-24 h-24 bg-[var(--yellow-400)] border-3 border-black -rotate-6 animate-float hidden lg:block" style={{ animationDelay: "1s" }} />
-      <div className="absolute top-40 left-1/4 w-16 h-16 bg-[var(--mint)] border-3 border-black rotate-45 animate-bounce-subtle hidden lg:block" />
+      <div className="absolute top-20 right-10 w-32 h-32 bg-[var(--pink-300)] border-3 border-black rotate-12 animate-float hidden lg:block z-10" />
+      <div className="absolute bottom-20 left-10 w-24 h-24 bg-[var(--yellow-400)] border-3 border-black -rotate-6 animate-float hidden lg:block z-10" style={{ animationDelay: "1s" }} />
+      <div className="absolute top-40 left-1/4 w-16 h-16 bg-[var(--mint)] border-3 border-black rotate-45 animate-bounce-subtle hidden lg:block z-10" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-20">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--yellow-400)] border-3 border-black shadow-[4px_4px_0px_var(--black)]">
