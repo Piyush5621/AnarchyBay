@@ -5,6 +5,7 @@ import {
   getMyPurchases,
   getCreatorSales,
   hasPurchased,
+  getPurchasesByOrder,
 } from "../services/purchase.service.js";
 import { validateDiscount, useDiscount } from "../services/discount.service.js";
 import { findProductById } from "../repositories/product.repository.js";
@@ -31,12 +32,12 @@ export const initiatePurchaseController = async (req, res) => {
     }
 
     const { data, error } = await createPurchase({
-      customerId: req.user.id,
-      productId,
-      variantId,
-      paymentProvider: "stripe",
-      discountCodeId,
-      discountAmount,
+      customer_id: req.user.id,
+      product_id: productId,
+      variant_id: variantId,
+      payment_provider: "stripe",
+      discount_code_id: discountCodeId,
+      discount_amount: discountAmount,
       status: "pending",
     });
 
@@ -75,20 +76,25 @@ export const completePurchaseController = async (req, res) => {
 };
 
 export const getPurchaseController = async (req, res) => {
-  try {
-    const { data, error } = await getPurchase(req.params.id);
-    if (error || !data) {
-      return res.status(404).json({ error: "Purchase not found" });
-    }
+  const { id } = req.params;
+  const { data, error } = await getPurchase(id);
 
-    if (data.customer_id !== req.user.id) {
-      return res.status(403).json({ error: "Unauthorized" });
-    }
-
-    return res.status(200).json(data);
-  } catch (error) {
-    return res.status(500).json({ error: "Internal server error" });
+  if (error) {
+    return res.status(400).json({ error: error.message });
   }
+
+  return res.status(200).json(data);
+};
+
+export const getPurchasesByOrderController = async (req, res) => {
+  const { orderId } = req.params;
+  const { data, error } = await getPurchasesByOrder(orderId);
+
+  if (error) {
+    return res.status(400).json({ error: error.message });
+  }
+
+  return res.status(200).json(data);
 };
 
 export const getMyPurchasesController = async (req, res) => {

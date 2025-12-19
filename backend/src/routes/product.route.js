@@ -49,9 +49,9 @@ router.post("/:productId/variants", requireAuth, requireCreator, createVariantCo
 router.put("/variants/:id", requireAuth, requireCreator, updateVariantController);
 router.delete("/variants/:id", requireAuth, requireCreator, deleteVariantController);
 
+router.get("/:productId/variants", getProductVariantsController);
 router.get("/:id", getProductController);
 router.get("/:id/files", getProductFilesController);
-router.get("/:productId/variants", getProductVariantsController);
 router.put("/:id", requireAuth, requireCreator, updateProductController);
 router.delete("/:id", requireAuth, requireCreator, deleteProductController);
 

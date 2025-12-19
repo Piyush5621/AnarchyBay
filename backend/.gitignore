@@ -64,3 +64,4 @@ jest-html-reporters-*
 # MongoDB dump / backups
 # ───────────────────────────────
 dump/
+.env

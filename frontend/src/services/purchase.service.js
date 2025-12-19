@@ -1,16 +1,16 @@
 import api from "../lib/api/client.js";
 
-export const createDodoCheckout = async ({ productId, variantId, discountCode }) => {
-  return await api.post("/api/purchases/checkout/dodo", {
+export const createRazorpayOrder = async ({ productId, variantId, discountAmount, discountCodeId }) => {
+  return await api.post("/api/purchases/checkout/razorpay", {
     productId,
     variantId,
-    discountCode,
+    discountAmount,
+    discountCodeId,
   });
 };
 
-export const verifyPurchase = async (purchaseId, paymentId) => {
-  const params = paymentId ? `?paymentId=${paymentId}` : "";
-  return await api.get(`/api/purchases/verify/${purchaseId}${params}`);
+export const verifyRazorpayPayment = async (paymentData) => {
+  return await api.post("/api/purchases/verify/razorpay", paymentData);
 };
 
 export const getMyPurchases = async (page = 1, limit = 20) => {
@@ -19,6 +19,10 @@ export const getMyPurchases = async (page = 1, limit = 20) => {
 
 export const getPurchase = async (purchaseId) => {
   return await api.get(`/api/purchases/${purchaseId}`);
+};
+
+export const getPurchasesByOrder = async (orderId) => {
+  return await api.get(`/api/purchases/order/${orderId}`);
 };
 
 export const checkPurchase = async (productId) => {
