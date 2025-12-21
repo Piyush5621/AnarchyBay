@@ -135,6 +135,21 @@ router.delete("/products/:id", requireAuth, requireRole('admin'), async (req, re
   }
 });
 
+// ✅ NEW: Reactivate (Unban) a product
+router.put("/products/:id/activate", requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('products')
+      .update({ is_active: true }) // Set back to TRUE
+      .eq('id', req.params.id);
+
+    if (error) throw error;
+    return res.json({ message: 'Product reactivated successfully' });
+  } catch (error) {
+    return res.status(500).json({ error: 'Failed to reactivate product' });
+  }
+});
+
 // ================= CONTACT MESSAGES =================
 // Get all contact messages (Admin)
 router.get(

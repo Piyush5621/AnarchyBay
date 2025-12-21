@@ -295,25 +295,27 @@ export const uploadProfileImageController = async (req, res) => {
 
 export const searchProfilesController = async (req, res) => {
     try {
-        const { q } = req.query;
+        // ✅ CHANGE 'q' TO 'search' to match frontend
+        const { search } = req.query; 
         
-        if (!q || q.trim() === "") {
+        if (!search || search.trim() === "") {
             return res.status(200).json({ profiles: [] });
         }
 
         const options = {
             page: parseInt(req.query.page) || 1,
-            limit: parseInt(req.query.limit) || 20,
+            limit: parseInt(req.query.limit) || 5, // Default to 5 for spotlight
         };
 
-        const { data, error, count } = await searchProfiles(q, options);
+        // Pass 'search' variable to your service
+        const { data, error, count } = await searchProfiles(search, options);
         
         if (error) {
             return handleSupabaseError(res, error);
         }
 
         return res.status(200).json({
-            profiles: data || [],
+            profiles: data || [], // Ensure this matches what frontend expects (data.profiles)
             total: count || 0,
             page: options.page,
             limit: options.limit,

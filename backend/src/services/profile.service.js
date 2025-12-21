@@ -33,13 +33,25 @@ export const searchProfiles = async (query, options = {}) => {
     const { page = 1, limit = 20 } = options;
     const offset = (page - 1) * limit;
 
-    return await supabase
+    // 1. Search Query
+    const { data, error, count } = await supabase
         .from("profiles")
         .select("id, name, username, display_name, bio, profile_image_url, created_at, role", { count: "exact" })
+        // Search in Name OR Username OR Display Name
         .or(`name.ilike.%${query}%,username.ilike.%${query}%,display_name.ilike.%${query}%`)
-        .eq("role", "seller")
+        // ❌ REMOVED: .eq("role", "seller") <- This was blocking non-sellers!
         .order("created_at", { ascending: false })
         .range(offset, offset + limit - 1);
+
+    if (error) return { data: [], count: 0, error };
+
+    // 2. Map 'id' to 'user_id' for consistency with your frontend
+    const formattedData = data.map(user => ({
+        ...user,
+        user_id: user.id, // Frontend expects 'user_id' in some places
+    }));
+
+    return { data: formattedData, count, error: null };
 }
 
 export const updateUserProfile = async ({ userId, updates }) => {
