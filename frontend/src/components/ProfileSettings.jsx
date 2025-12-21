@@ -114,16 +114,58 @@ export default function ProfileSettings() {
     return true;
   };
 
+  const convertHandleToUrl = (platform, value) => {
+    if (!value || value.trim() === "") return "";
+    
+    // If already a full URL, return as is
+    if (value.startsWith("http://") || value.startsWith("https://")) {
+      return value;
+    }
+
+    // Remove @ symbol if present
+    const handle = value.replace("@", "").trim();
+
+    // Convert handle to full URL based on platform
+    const urlMap = {
+      instagram: `https://instagram.com/${handle}`,
+      twitter: `https://twitter.com/${handle}`,
+      facebook: `https://facebook.com/${handle}`,
+      linkedin: `https://linkedin.com/in/${handle}`,
+      youtube: `https://youtube.com/@${handle}`,
+      tiktok: `https://tiktok.com/@${handle}`,
+      github: `https://github.com/${handle}`,
+      website: value.includes(".") ? `https://${value}` : value,
+    };
+
+    return urlMap[platform] || value;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
 
     try {
-      const res = await api.put("/api/profile/me", form, { requireAuth: true });
+      // Convert all social links from handles to full URLs
+      const convertedSocialLinks = {};
+      Object.keys(form.social_links).forEach(platform => {
+        const value = form.social_links[platform];
+        if (value && value.trim() !== "") {
+          convertedSocialLinks[platform] = convertHandleToUrl(platform, value);
+        }
+      });
+
+      const dataToSave = {
+        ...form,
+        social_links: convertedSocialLinks,
+      };
+
+      const res = await api.put("/api/profile/me", dataToSave, { requireAuth: true });
       if (res?.error) {
         toast.error(res.error || "Failed to update profile");
       } else {
         toast.success("Profile updated!");
+        // Update form with converted URLs
+        setForm(f => ({ ...f, social_links: convertedSocialLinks }));
         queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.USER] });
       }
     } catch {

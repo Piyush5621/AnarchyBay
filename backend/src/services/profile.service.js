@@ -8,7 +8,7 @@ export const createUserProfile = async ({ id, name, email, role }) => {
 export const getUserProfile = async ({ userId }) => {
     return await supabase
         .from("profiles")
-        .select("id, name, email, role, username, display_name, bio, preferred_payment_provider, stripe_customer_id, stripe_account_id, profile_image_url, created_at, updated_at")
+        .select("id, name, email, role, username, display_name, bio, social_links, preferred_payment_provider, stripe_customer_id, stripe_account_id, profile_image_url, created_at, updated_at")
         .eq("id", userId)
         .single();
 }
@@ -16,7 +16,7 @@ export const getUserProfile = async ({ userId }) => {
 export const getPublicProfile = async ({ userId }) => {
     return await supabase
         .from("profiles")
-        .select("id, name, username, display_name, bio, profile_image_url, created_at")
+        .select("id, name, username, display_name, bio, social_links, profile_image_url, created_at")
         .eq("id", userId)
         .single();
 }
@@ -24,7 +24,7 @@ export const getPublicProfile = async ({ userId }) => {
 export const getProfileByUsername = async (username) => {
     return await supabase
         .from("profiles")
-        .select("id, name, username, display_name, bio, profile_image_url, created_at")
+        .select("id, name, username, display_name, bio, social_links, profile_image_url, created_at")
         .eq("username", username)
         .single();
 }
@@ -52,7 +52,7 @@ export const updateUserProfile = async ({ userId, updates }) => {
         .from("profiles")
         .update(updateData)
         .eq("id", userId)
-        .select("id, name, email, role, username, display_name, bio, preferred_payment_provider, stripe_customer_id, stripe_account_id, profile_image_url, created_at, updated_at")
+        .select("id, name, email, role, username, display_name, bio, social_links, preferred_payment_provider, stripe_customer_id, stripe_account_id, profile_image_url, created_at, updated_at")
         .single();
 }
 
