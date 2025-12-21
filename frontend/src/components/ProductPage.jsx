@@ -529,13 +529,15 @@ export default function ProductPage() {
                   <span className="text-lg font-bold uppercase">one-time</span>
                 </div>
 
-                <button
-                  onClick={handleAddToCart}
-                  style={!inCart ? { backgroundColor: buttonColor } : undefined}
-                  className={`w-full py-5 text-xl font-bold uppercase border-3 border-black transition-all mb-4 ${inCart ? "bg-[var(--mint)] shadow-[4px_4px_0px_var(--black)]" : "text-white shadow-[4px_4px_0px_var(--black)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_var(--black)]"}`}
-                >
-                  {inCart ? "✓ Added to Cart" : "Add to Cart"}
-                </button>
+                {!hasPurchased && (
+                  <button
+                    onClick={handleAddToCart}
+                    style={!inCart ? { backgroundColor: buttonColor } : undefined}
+                    className={`w-full py-5 text-xl font-bold uppercase border-3 border-black transition-all mb-4 ${inCart ? "bg-[var(--mint)] shadow-[4px_4px_0px_var(--black)]" : "text-white shadow-[4px_4px_0px_var(--black)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_var(--black)]"}`}
+                  >
+                    {inCart ? "✓ Added to Cart" : "Add to Cart"}
+                  </button>
+                )}
 
                 <button
                   onClick={handleBuyNow}
@@ -548,7 +550,7 @@ export default function ProductPage() {
                       Processing...
                     </>
                   ) : hasPurchased ? (
-                    "Download Files"
+                    "View in Library"
                   ) : (
                     `Buy Now • ${product.currency === "INR" ? "₹" : "$"}${selectedVariant ? selectedVariant.price : product.price}`
                   )}

@@ -81,7 +81,8 @@ export const deleteProductController = async (req, res) => {
 
 export const getProductController = async (req, res) => {
   try {
-    const { data, error } = await getProduct(req.params.id);
+    const userId = req.user?.id;
+    const { data, error } = await getProduct(req.params.id, userId);
     if (error) {
       return res.status(error.status || 404).json({ error: error.message });
     }

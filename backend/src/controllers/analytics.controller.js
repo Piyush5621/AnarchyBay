@@ -6,6 +6,8 @@ import {
   getTopSellingProducts,
   getBalance,
   getDashboardData,
+  getUserAnalytics,
+  getAdminAnalytics,
 } from "../services/analytics.service.js";
 import { verifyProductOwnership } from "../services/product.service.js";
 
@@ -129,6 +131,46 @@ export const getDashboardController = async (req, res) => {
     };
 
     const { data, error } = await getDashboardData(req.user.id, options);
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getUserAnalyticsController = async (req, res) => {
+  try {
+    const options = {
+      startDate: req.query.startDate,
+      endDate: req.query.endDate,
+    };
+
+    const { data, error } = await getUserAnalytics(req.user.id, options);
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getAdminAnalyticsController = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    const options = {
+      startDate: req.query.startDate,
+      endDate: req.query.endDate,
+    };
+
+    const { data, error } = await getAdminAnalytics(options);
     if (error) {
       return res.status(400).json({ error: error.message });
     }

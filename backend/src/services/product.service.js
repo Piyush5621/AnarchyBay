@@ -165,7 +165,7 @@ export const deleteProduct = async (productId, creatorId) => {
   return await softDeleteProduct(productId);
 };
 
-export const getProduct = async (productId) => {
+export const getProduct = async (productId, userId = null) => {
   const { data: product, error } = await findProductById(productId);
 
   if (error || !product) {
@@ -175,11 +175,25 @@ export const getProduct = async (productId) => {
   const { data: variants } = await findVariantsByProduct(productId);
   const { data: files } = await findFilesByProduct(productId);
 
+  let isPurchased = false;
+  if (userId) {
+    const { data: purchase } = await supabase
+      .from("purchases")
+      .select("id")
+      .eq("customer_id", userId)
+      .eq("product_id", productId)
+      .eq("status", "completed")
+      .maybeSingle();
+    
+    if (purchase) isPurchased = true;
+  }
+
   return {
     data: {
       ...product,
       variants: variants || [],
       files: files?.map((f) => f.files) || [],
+      isPurchased
     },
   };
 };

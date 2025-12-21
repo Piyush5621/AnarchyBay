@@ -4,6 +4,8 @@ import {
   getSalesOverTime,
   getTopProducts,
   getCreatorBalance,
+  getUserPurchaseStats,
+  getAdminGlobalStats,
 } from "../repositories/analytics.repository.js";
 import { countProductsByCreator } from "../repositories/product.repository.js";
 import { countPurchasesByCreator } from "../repositories/purchase.repository.js";
@@ -66,5 +68,32 @@ export const getDashboardData = async (creatorId, options = {}) => {
       salesChart: salesChart.data || [],
       topProducts: topProducts.data || [],
     },
+  };
+};
+
+export const getUserAnalytics = async (userId, options = {}) => {
+  return await getUserPurchaseStats(userId, options);
+};
+
+export const getAdminAnalytics = async (options = {}) => {
+  const stats = await getAdminGlobalStats(options);
+  if (stats.error) return { error: stats.error };
+
+  const { purchases } = stats.data;
+  
+  // Group revenue by day for chart
+  const revenueChart = {};
+  purchases.forEach(p => {
+    const key = new Date(p.purchased_at).toISOString().split("T")[0];
+    if (!revenueChart[key]) revenueChart[key] = { date: key, revenue: 0, platform_fee: 0 };
+    revenueChart[key].revenue += parseFloat(p.amount);
+    revenueChart[key].platform_fee += parseFloat(p.platform_fee);
+  });
+
+  return {
+    data: {
+      ...stats.data,
+      revenueChart: Object.values(revenueChart)
+    }
   };
 };

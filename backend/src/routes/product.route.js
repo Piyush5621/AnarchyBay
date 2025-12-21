@@ -19,7 +19,7 @@ import {
   getProductVariantsController,
 } from "../controllers/variant.controller.js";
 import { getProductFilesController } from "../controllers/file.controller.js";
-import { requireAuth, requireCreator } from "../middleware/auth.js";
+import { requireAuth, requireCreator, optionalAuth } from "../middleware/auth.js";
 
 const router = Router();
 
@@ -50,7 +50,7 @@ router.put("/variants/:id", requireAuth, requireCreator, updateVariantController
 router.delete("/variants/:id", requireAuth, requireCreator, deleteVariantController);
 
 router.get("/:productId/variants", getProductVariantsController);
-router.get("/:id", getProductController);
+router.get("/:id", optionalAuth, getProductController);
 router.get("/:id/files", getProductFilesController);
 router.put("/:id", requireAuth, requireCreator, updateProductController);
 router.delete("/:id", requireAuth, requireCreator, deleteProductController);

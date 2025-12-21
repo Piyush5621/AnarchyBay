@@ -1,28 +1,37 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/use-auth";
-import useTotalUsers from "@/hooks/profile/use-total-users";
 import useUserProfileInfo from "@/hooks/profile/use-user-profile-info";
-import useTotalProducts from "@/hooks/products/use-total-products";
 import NavBar from "./NavBar";
 import { supabase } from "@/lib/supabase";
 import { saveSessionTokens, getAccessToken } from "@/lib/api/client.js";
+import {
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
+    PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, Radar, Legend
+} from 'recharts';
+import { 
+  ShoppingBag, DollarSign, Package, Users, ArrowUpRight, ArrowDownRight, 
+  BarChart2, PieChart as PieChartIcon, Activity, Plus, Library, Settings, LogOut,
+  Wallet, TrendingUp, History
+} from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
+const COLORS = ['#FFD600', '#FF00FF', '#00FFFF', '#00FF00', '#FF5733', '#C70039'];
+
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
-  const totalUsersQuery = useTotalUsers();
+  const { isAuthenticated, user, logout } = useAuth();
   const profileQuery = useUserProfileInfo();
-  const totalProductsQuery = useTotalProducts();
   const [checkingAuth, setCheckingAuth] = useState(true);
-  const [myProducts, setMyProducts] = useState([]);
-  const [wishlist, setWishlist] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     const checkOAuthSession = async () => {
-      if (getAccessToken()) {
+      const token = getAccessToken();
+      if (token) {
         setCheckingAuth(false);
         return;
       }
@@ -46,271 +55,366 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      const token = getAccessToken();
-      Promise.all([
-        fetch(`${API_URL}/api/products/my/list`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json()),
-        fetch(`${API_URL}/api/wishlist`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json()),
-      ]).then(([productsData, wishlistData]) => {
-        setMyProducts(productsData.products || []);
-        setWishlist(wishlistData.items || []);
-      }).catch(() => {});
+      fetchAnalytics();
     }
   }, [isAuthenticated]);
 
-  const removeFromWishlist = async (productId) => {
+  const fetchAnalytics = async () => {
     try {
+      setLoading(true);
       const token = getAccessToken();
-      await fetch(`${API_URL}/api/wishlist/${productId}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
-      setWishlist(prev => prev.filter(item => item.product_id !== productId));
-    } catch {}
-  };
+      const headers = { Authorization: `Bearer ${token}` };
+      
+      const [userRes, dashboardRes] = await Promise.all([
+        fetch(`${API_URL}/api/analytics/user`, { headers }).then(res => res.json()),
+        fetch(`${API_URL}/api/analytics/dashboard`, { headers }).then(res => res.json()).catch(() => ({ data: null }))
+      ]);
 
-  const addToCart = async (productId) => {
-    try {
-      const token = getAccessToken();
-      await fetch(`${API_URL}/api/cart`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ productId }),
+      setAnalytics({
+        user: userRes.data,
+        creator: dashboardRes.data
       });
-    } catch {}
+    } catch (err) {
+      console.error("Error fetching analytics:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const stats = {
-    products: totalProductsQuery.data ?? 0,
-    users: totalUsersQuery.data ?? 0,
-  };
-
-  if (checkingAuth) {
+  if (checkingAuth || loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <svg className="w-12 h-12 animate-spin mx-auto mb-4 text-slate-400" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
-          <p className="font-medium text-slate-600">Verifying...</p>
+      <div className="min-h-screen bg-[var(--yellow-50)] flex items-center justify-center font-bold">
+        <div className="text-center p-8 border-4 border-black bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <div className="w-12 h-12 border-8 border-black border-t-[var(--pink-500)] rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-2xl uppercase italic">SYST3M L0ADING...</p>
         </div>
       </div>
     );
   }
 
+  const radarData = [
+    { subject: 'Purchases', A: analytics?.user?.purchaseCount || 0, fullMark: 10 },
+    { subject: 'Sales', A: analytics?.creator?.overview?.salesCount || 0, fullMark: 10 },
+    { subject: 'Products', A: analytics?.creator?.overview?.productCount || 0, fullMark: 10 },
+    { subject: 'Revenue', A: Math.log10((analytics?.creator?.overview?.totalRevenue || 1)) * 2, fullMark: 10 },
+    { subject: 'Library', A: analytics?.user?.purchases?.length || 0, fullMark: 10 },
+  ];
+
+  const spendingData = analytics?.user?.purchases?.reduce((acc, p) => {
+    const date = new Date(p.purchased_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const existing = acc.find(item => item.date === date);
+    if (existing) existing.amount += parseFloat(p.amount);
+    else acc.push({ date, amount: parseFloat(p.amount) });
+    return acc;
+  }, []).reverse().slice(-7) || [];
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[var(--yellow-50)] text-black font-sans selection:bg-[var(--pink-500)] selection:text-white">
       <NavBar />
-
-      <main className="pt-24 pb-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="mb-10">
-            <h1 className="font-display text-4xl md:text-5xl mb-2">
-              Welcome back, {profileQuery.data?.name || user?.name || "Creator"}
-            </h1>
-            <p className="text-lg text-slate-500">Manage your products and track your sales.</p>
+      
+      <div className="flex h-screen pt-20">
+        {/* Neo-Brutalist Sidebar */}
+        <aside className="w-72 bg-white border-r-4 border-black hidden lg:flex flex-col fixed h-full z-10 p-6 overflow-y-auto">
+          <div className="flex items-center gap-3 mb-10 mt-2 p-4 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-[var(--cyan-400)]">
+            <span className="text-2xl font-black uppercase italic tracking-tighter">ANARCHY BAY</span>
           </div>
+          
+          <nav className="space-y-4 flex-1">
+            <SidebarItem 
+              icon={<Activity size={24} strokeWidth={3} />} 
+              label="Overview" 
+              active={activeTab === "overview"} 
+              onClick={() => setActiveTab("overview")} 
+            />
+            <SidebarItem 
+              icon={<Library size={24} strokeWidth={3} />} 
+              label="My Library" 
+              onClick={() => navigate("/library")} 
+            />
+            <SidebarItem 
+              icon={<Package size={24} strokeWidth={3} />} 
+              label="My Products" 
+              onClick={() => navigate("/seller")} 
+            />
+            <SidebarItem 
+              icon={<Plus size={24} strokeWidth={3} />} 
+              label="Sell Item" 
+              onClick={() => navigate("/create-product")} 
+              variant="pink"
+            />
+            
+            <div className="pt-6 mt-6 border-t-4 border-black">
+              <SidebarItem 
+                icon={<Settings size={24} strokeWidth={3} />} 
+                label="Settings" 
+                onClick={() => navigate("/profile")} 
+              />
+              <SidebarItem 
+                icon={<LogOut size={24} strokeWidth={3} />} 
+                label="Logout" 
+                onClick={logout} 
+              />
+            </div>
+          </nav>
 
-          <div className="grid md:grid-cols-4 gap-4 mb-10">
-            <StatCard icon={<BoxIcon />} label="Total Products" value={stats.products} />
-            <StatCard icon={<UsersIcon />} label="Total Users" value={stats.users} />
-            <StatCard icon={<CurrencyIcon />} label="Revenue" value="₹0" />
-            <StatCard icon={<ChartIcon />} label="This Month" value="₹0" />
+          <div className="mt-8 border-4 border-black bg-[var(--yellow-400)] p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <p className="text-xs font-black uppercase tracking-widest mb-3 border-b-2 border-black pb-1">User ID: #{user?.id?.slice(0, 8)}</p>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 border-4 border-black bg-white flex items-center justify-center font-black text-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                {user?.name?.[0].toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <p className="font-black text-sm uppercase truncate">{user?.name}</p>
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-green-500 border border-black rounded-full animate-pulse" />
+                  <p className="text-[10px] font-bold uppercase text-black/60 truncate">{user?.role}</p>
+                </div>
+              </div>
+            </div>
           </div>
+        </aside>
 
-          <div className="grid lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="font-semibold text-xl">Your Products</h2>
-                  <button
-                    onClick={() => navigate("/create-product")}
-                    className="px-4 py-2 font-medium rounded-full bg-slate-900 text-white hover:bg-slate-800 transition-colors flex items-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                    New Product
-                  </button>
+        {/* Main Content Area */}
+        <main className="flex-1 lg:ml-72 overflow-y-auto p-6 md:p-10 lg:p-14 bg-[var(--yellow-50)]">
+          <div className="max-w-7xl mx-auto">
+            <header className="mb-14 flex flex-col md:flex-row md:items-start justify-between gap-8 border-b-8 border-black pb-10">
+              <div className="relative">
+                <div className="absolute -top-6 -left-4 w-16 h-8 bg-[var(--pink-500)] border-4 border-black -rotate-12 flex items-center justify-center text-white text-xs font-black uppercase">Active</div>
+                <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tighter leading-none mb-4">
+                  HELLO, <br/> {user?.name?.split(' ')[0]}
+                </h1>
+                <p className="text-2xl font-bold bg-white border-4 border-black px-4 py-2 inline-block -rotate-1 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                  Welcome to the Anarchy.
+                </p>
+              </div>
+              
+              <div className="flex flex-col gap-4">
+                <button 
+                  onClick={() => navigate("/create-product")}
+                  className="bg-[var(--pink-500)] text-white px-8 py-5 border-4 border-black font-black uppercase text-xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-4px] hover:translate-y-[-4px] hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center justify-center gap-3"
+                >
+                  <Plus size={24} strokeWidth={4} /> Launch Product
+                </button>
+              </div>
+            </header>
+
+            {/* Top Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+              <BigStatCard 
+                label="Purchases Total" 
+                value={`₹${analytics?.user?.totalSpent?.toLocaleString() || 0}`} 
+                color="bg-[var(--yellow-400)]"
+                icon={<Wallet size={28} strokeWidth={3} />}
+              />
+              <BigStatCard 
+                label="Creator Revenue" 
+                value={`₹${analytics?.creator?.overview?.totalRevenue?.toLocaleString() || 0}`} 
+                color="bg-[var(--cyan-400)]"
+                icon={<TrendingUp size={28} strokeWidth={3} />}
+              />
+              <BigStatCard 
+                label="Active Balance" 
+                value={`₹${analytics?.creator?.overview?.availableBalance?.toLocaleString() || 0}`} 
+                color="bg-[var(--green-400)]"
+                icon={<DollarSign size={28} strokeWidth={3} />}
+              />
+              <BigStatCard 
+                label="Conversion" 
+                value="8.4%" 
+                color="bg-[var(--pink-300)]"
+                icon={<Activity size={28} strokeWidth={3} />}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 mb-16">
+              {/* Creator Earnings Detail */}
+              <div className="lg:col-span-8 bg-white border-4 border-black p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] flex flex-col">
+                <div className="flex items-center justify-between mb-10">
+                  <h3 className="text-3xl font-black uppercase italic border-b-4 border-black pb-2">Sales Momentum</h3>
+                  <div className="p-3 border-4 border-black bg-[var(--yellow-400)] font-black text-sm uppercase">7-Day Analysis</div>
+                </div>
+                <div className="h-[400px] w-full bg-white flex items-center justify-center">
+                    <AreaChart data={spendingData} width={800} height={400} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="0" stroke="#000" strokeWidth={1} vertical={false} />
+                      <XAxis 
+                        dataKey="date" 
+                        axisLine={{ stroke: '#000', strokeWidth: 4 }} 
+                        tickLine={{ stroke: '#000', strokeWidth: 4 }} 
+                        tick={{ fill: '#000', fontWeight: 'bold' }} 
+                      />
+                      <YAxis 
+                        axisLine={{ stroke: '#000', strokeWidth: 4 }} 
+                        tickLine={{ stroke: '#000', strokeWidth: 4 }} 
+                        tick={{ fill: '#000', fontWeight: 'bold' }} 
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#000', 
+                          border: '4px solid #fff', 
+                          color: '#fff',
+                          fontWeight: 'black',
+                          textTransform: 'uppercase'
+                        }}
+                      />
+                      <Area 
+                        type="stepAfter" 
+                        dataKey="amount" 
+                        stroke="#FF00FF" 
+                        strokeWidth={8} 
+                        fill="#FFD600" 
+                        fillOpacity={1} 
+                      />
+                    </AreaChart>
+                </div>
+              </div>
+
+              {/* Activity Radar */}
+              <div className="lg:col-span-4 bg-[var(--cyan-400)] border-4 border-black p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+                <h3 className="text-2xl font-black uppercase text-center mb-8 bg-white border-4 border-black p-2">Skill Matrix</h3>
+                <div className="h-[300px] w-full flex justify-center">
+                    <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData} width={300} height={300}>
+                      <PolarGrid stroke="#000" strokeWidth={2} />
+                      <PolarAngleAxis dataKey="subject" tick={{ fill: '#000', fontWeight: 'black', fontSize: 12 }} />
+                      <Radar
+                        name="Usage"
+                        dataKey="A"
+                        stroke="#000"
+                        strokeWidth={4}
+                        fill="#FF00FF"
+                        fillOpacity={0.8}
+                      />
+                    </RadarChart>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+              {/* Recent Buys */}
+              <div className="bg-white border-4 border-black p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--pink-300)] border-l-4 border-b-4 border-black -mr-16 -mt-16 rotate-45 transform"></div>
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="p-3 border-4 border-black bg-[var(--green-400)]">
+                    <History size={24} strokeWidth={3} />
+                  </div>
+                  <h3 className="text-3xl font-black uppercase">Recent Acquisitions</h3>
+                </div>
+                
+                <div className="space-y-6">
+                  {(analytics?.user?.purchases || []).slice(0, 4).map((p) => (
+                    <div key={p.id} className="border-4 border-black p-4 bg-[var(--yellow-50)] flex items-center justify-between hover:bg-white transition-colors group">
+                      <div className="flex items-center gap-6">
+                        <div className="w-16 h-16 border-4 border-black flex items-center justify-center bg-white group-hover:bg-[var(--cyan-400)] transition-colors overflow-hidden">
+                          {p.products?.image_url?.[0] ? (
+                            <img src={p.products.image_url[0]} className="w-full h-full object-cover" />
+                          ) : (
+                            <ShoppingBag className="text-black" size={24} />
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-xl font-black uppercase leading-tight">{p.products?.name}</p>
+                          <p className="text-xs font-bold uppercase text-black/40">{new Date(p.purchased_at).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-black italic">₹{p.amount}</p>
+                        <span className="text-[10px] font-black uppercase bg-black text-white px-2 py-0.5">SECURED</span>
+                      </div>
+                    </div>
+                  ))}
+                  {(!analytics?.user?.purchases || analytics.user.purchases.length === 0) && (
+                    <div className="p-10 border-4 border-dashed border-black text-center bg-white">
+                      <p className="text-xl font-black uppercase italic">Null Void_ No Data Found</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Creator Sells */}
+              <div className="bg-white border-4 border-black p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="p-3 border-4 border-black bg-[var(--cyan-400)]">
+                    <TrendingUp size={24} strokeWidth={3} />
+                  </div>
+                  <h3 className="text-3xl font-black uppercase">Creator Intel</h3>
                 </div>
 
-                {myProducts.length === 0 ? (
-                  <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-xl">
-                    <svg className="w-12 h-12 mx-auto mb-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                    </svg>
-                    <h3 className="font-semibold text-lg mb-2">No products yet</h3>
-                    <p className="text-slate-500 mb-6">Create your first digital product and start selling!</p>
-                    <button
-                      onClick={() => navigate("/create-product")}
-                      className="px-5 py-2.5 font-medium rounded-full bg-slate-900 text-white hover:bg-slate-800 transition-colors"
-                    >
-                      Create Product
+                <div className="grid grid-cols-2 gap-6 mb-8">
+                  <div className="border-4 border-black bg-[var(--yellow-400)] p-4">
+                    <p className="text-xs font-black uppercase border-b-2 border-black mb-2">Total Sales</p>
+                    <p className="text-4xl font-black italic">{analytics?.creator?.overview?.salesCount || 0}</p>
+                  </div>
+                  <div className="border-4 border-black bg-[var(--pink-300)] p-4">
+                    <p className="text-xs font-black uppercase border-b-2 border-black mb-2">Total Payouts</p>
+                    <p className="text-4xl font-black italic">₹{analytics?.creator?.overview?.totalPayouts || 0}</p>
+                  </div>
+                </div>
+
+                <div className="bg-black text-white p-6 border-4 border-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mb-6">
+                  <div className="flex justify-between items-end mb-4">
+                    <div>
+                      <p className="text-xs font-bold text-white/60 uppercase">Withdrawal Ready</p>
+                      <p className="text-5xl font-black tracking-tight text-[var(--yellow-400)]">₹{analytics?.creator?.overview?.availableBalance || 0}</p>
+                    </div>
+                    <button className="bg-white text-black px-6 py-2 border-4 border-[var(--yellow-400)] font-black uppercase hover:bg-[var(--yellow-400)] transition-colors">
+                      Eject Funds
                     </button>
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    {myProducts.slice(0, 5).map(product => (
-                      <div 
-                        key={product.id}
-                        onClick={() => navigate(`/product/${product.id}`)}
-                        className="flex items-center gap-4 p-4 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors"
-                      >
-                        <div className="w-14 h-14 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-                          {product.thumbnail_url ? (
-                            <img src={product.thumbnail_url} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <svg className="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                            </svg>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium truncate">{product.name}</h4>
-                          <p className="text-sm text-slate-500 truncate">{product.short_description || product.description}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold text-lg">
-                            {product.currency === 'INR' ? '₹' : '$'}{product.price}
-                          </p>
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${product.is_active ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"}`}>
-                            {product.is_active ? "Active" : "Draft"}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="w-full bg-white/20 h-2">
+                    <div className="bg-[var(--yellow-400)] h-full w-3/4"></div>
                   </div>
-                )}
-              </div>
-
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                <h2 className="font-semibold text-xl mb-4">Wishlist</h2>
-                {wishlist.length === 0 ? (
-                  <p className="text-center py-8 text-slate-400">Your wishlist is empty</p>
-                ) : (
-                  <div className="space-y-3">
-                    {wishlist.slice(0, 5).map(item => (
-                      <div key={item.id} className="flex items-center gap-4 p-3 rounded-xl border border-slate-200">
-                        <div 
-                          className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden cursor-pointer"
-                          onClick={() => navigate(`/product/${item.product_id}`)}
-                        >
-                          {item.product?.thumbnail_url ? (
-                            <img src={item.product.thumbnail_url} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                            </svg>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/product/${item.product_id}`)}>
-                          <h4 className="font-medium text-sm truncate">{item.product?.name || "Product"}</h4>
-                          <p className="text-sm font-semibold text-slate-700">
-                            {item.product?.currency === 'INR' ? '₹' : '$'}{item.product?.price}
-                          </p>
-                        </div>
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => { addToCart(item.product_id); removeFromWishlist(item.product_id); }}
-                            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-                            title="Add to cart"
-                          >
-                            <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => removeFromWishlist(item.product_id)}
-                            className="p-2 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Remove"
-                          >
-                            <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div className="bg-slate-900 text-white rounded-2xl shadow-lg p-6">
-                <h3 className="font-semibold text-lg mb-4">Quick Actions</h3>
-                <div className="space-y-2">
-                  <button
-                    onClick={() => navigate("/create-product")}
-                    className="w-full py-3 font-medium rounded-xl bg-white text-slate-900 hover:bg-slate-100 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                    Create Product
-                  </button>
-                  <button
-                    onClick={() => navigate("/browse")}
-                    className="w-full py-3 font-medium rounded-xl bg-slate-800 hover:bg-slate-700 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>
-                    Browse Marketplace
-                  </button>
-                  <button
-                    onClick={() => navigate("/library")}
-                    className="w-full py-3 font-medium rounded-xl bg-slate-800 hover:bg-slate-700 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
-                    My Library
-                  </button>
                 </div>
-              </div>
 
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                <h3 className="font-semibold text-lg mb-4">Profile</h3>
                 <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center text-xl font-semibold">
-                      {(profileQuery.data?.name || user?.name || "U")[0].toUpperCase()}
+                  <p className="font-black uppercase italic text-sm border-b-2 border-black pb-1">Top Selling Items</p>
+                  {(analytics?.creator?.topProducts || []).slice(0, 3).map((prod) => (
+                    <div key={prod.productId} className="flex items-center justify-between py-2">
+                      <span className="font-bold uppercase flex-1 truncate">{prod.name}</span>
+                      <div className="flex gap-4">
+                        <span className="text-sm font-black bg-[var(--cyan-400)] px-2">{prod.salesCount} sold</span>
+                        <span className="text-sm font-black italic">₹{prod.revenue}</span>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium">{profileQuery.data?.name || user?.name}</p>
-                      <p className="text-sm text-slate-500">{profileQuery.data?.email || user?.email}</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => navigate("/profile")}
-                    className="w-full py-2.5 font-medium rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors"
-                  >
-                    Edit Profile
-                  </button>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </main>
-    </div>
-  );
-}
-
-function StatCard({ icon, label, value }) {
-  return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 hover:shadow-md transition-shadow">
-      <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 mb-3">
-        {icon}
+        </main>
       </div>
-      <p className="text-sm text-slate-500 mb-1">{label}</p>
-      <p className="text-2xl font-semibold">{value}</p>
     </div>
   );
 }
 
-function BoxIcon() {
-  return <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>;
+function SidebarItem({ icon, label, active, onClick, variant }) {
+  const getStyle = () => {
+    if (active) return "bg-black text-white shadow-[6px_6px_0px_0px_var(--pink-500)]";
+    if (variant === "pink") return "bg-[var(--pink-500)] text-white hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]";
+    return "bg-white text-black hover:bg-[var(--yellow-400)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]";
+  };
+
+  return (
+    <button 
+      onClick={onClick}
+      className={`w-full flex items-center gap-4 px-6 py-4 border-4 border-black font-black uppercase text-lg transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${getStyle()}`}
+    >
+      <span className="flex-shrink-0">{icon}</span>
+      <span className="truncate">{label}</span>
+    </button>
+  );
 }
 
-function UsersIcon() {
-  return <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>;
-}
-
-function CurrencyIcon() {
-  return <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 8.25H9m6 3H9m3 6l-3-3h1.5a3 3 0 100-6M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
-}
-
-function ChartIcon() {
-  return <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" /></svg>;
+function BigStatCard({ label, value, color, icon }) {
+  return (
+    <div className={`${color} border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-between hover:translate-x-[-4px] hover:translate-y-[-4px] hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transition-all group`}>
+      <div className="flex items-center justify-between mb-8">
+        <div className="p-3 border-4 border-black bg-white group-hover:rotate-12 transition-transform">
+          {icon}
+        </div>
+      </div>
+      <div>
+        <p className="text-sm font-black uppercase text-black/70 mb-1 border-b-2 border-black/20 pb-1">{label}</p>
+        <p className="text-4xl font-black italic tracking-tighter truncate">{value}</p>
+      </div>
+    </div>
+  );
 }

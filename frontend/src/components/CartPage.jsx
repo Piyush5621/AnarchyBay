@@ -84,7 +84,7 @@ export default function CartPage() {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: orderData.amount,
         currency: orderData.currency,
-          name: "BitShelf",
+          name: "Anarchy Bay",
           description: `Purchase of ${cartItems.length} items`,
           image: "/favicon_io/android-chrome-512x512.png",
           order_id: orderData.orderId,

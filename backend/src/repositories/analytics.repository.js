@@ -208,3 +208,94 @@ export const getCreatorBalance = async (creatorId) => {
     },
   };
 };
+
+export const getUserPurchaseStats = async (userId, options = {}) => {
+  const { startDate, endDate } = options;
+
+  let query = supabase
+    .from("purchases")
+    .select(`
+      id,
+      amount,
+      purchased_at,
+      status,
+      product_id,
+      products (
+        id,
+        name,
+        category,
+        image_url,
+        price
+      )
+    `)
+    .eq("customer_id", userId)
+    .eq("status", "completed")
+    .order("purchased_at", { ascending: false });
+
+  if (startDate) query = query.gte("purchased_at", startDate);
+  if (endDate) query = query.lte("purchased_at", endDate);
+
+  const { data, error } = await query;
+  if (error) return { error };
+
+  const totalSpent = data.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+  const purchaseCount = data.length;
+  
+  // Category distribution
+  const categories = {};
+  data.forEach(p => {
+    const cats = p.products?.category || ["Other"];
+    cats.forEach(c => {
+      categories[c] = (categories[c] || 0) + 1;
+    });
+  });
+
+  const categoryStats = Object.entries(categories).map(([name, value]) => ({ name, value }));
+
+  return {
+    data: {
+      totalSpent,
+      purchaseCount,
+      purchases: data,
+      categoryStats
+    }
+  };
+};
+
+export const getAdminGlobalStats = async (options = {}) => {
+  const { startDate, endDate } = options;
+
+  let purchasesQuery = supabase
+    .from("purchases")
+    .select("amount, platform_fee, status, purchased_at")
+    .eq("status", "completed");
+
+  if (startDate) purchasesQuery = purchasesQuery.gte("purchased_at", startDate);
+  if (endDate) purchasesQuery = purchasesQuery.lte("purchased_at", endDate);
+
+  const { data: purchases, error: pError } = await purchasesQuery;
+  if (pError) return { error: pError };
+
+  const totalGMV = purchases.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+  const totalRevenue = purchases.reduce((sum, p) => sum + parseFloat(p.platform_fee), 0);
+  const totalSales = purchases.length;
+
+  const { count: totalUsers, error: uError } = await supabase
+    .from("profiles")
+    .select("*", { count: "exact", head: true });
+  
+  const { count: totalProducts, error: prError } = await supabase
+    .from("products")
+    .select("*", { count: "exact", head: true });
+
+  return {
+    data: {
+      totalGMV,
+      totalRevenue,
+      totalSales,
+      totalUsers,
+      totalProducts,
+      purchases
+    }
+  };
+};
