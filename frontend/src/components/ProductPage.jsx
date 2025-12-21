@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/use-auth";
 import NavBar from "./NavBar";
@@ -12,7 +12,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 // --- ICONS ---
 const Icons = {
   Check: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>,
-  Star: ({ filled, half }) => (
+  Star: ({ filled }) => (
     <svg className={`w-5 h-5 ${filled ? "fill-[var(--yellow-400)] text-black" : "fill-gray-200 text-gray-400"}`} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
     </svg>
@@ -25,6 +25,7 @@ const Icons = {
   Back: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
 };
 
+// --- MARKDOWN RENDERER ---
 function renderMarkdown(text) {
   if (!text) return "";
   let html = text
@@ -45,16 +46,14 @@ function renderMarkdown(text) {
 export default function ProductPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, loading: authLoading } = useAuth();
 
   // State
   const [hasPurchased, setHasPurchased] = useState(false);
   const [purchaseData, setPurchaseData] = useState(null);
-  const [checkingPurchase, setCheckingPurchase] = useState(true); // eslint-disable-line
   const [product, setProduct] = useState(null);
-  const [variants, setVariants] = useState([]); // eslint-disable-line
   const [selectedVariant, setSelectedVariant] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true);
   const [buying, setBuying] = useState(false);
   const [inWishlist, setInWishlist] = useState(false);
   const [reviews, setReviews] = useState([]);
@@ -66,7 +65,10 @@ export default function ProductPage() {
   const [newReview, setNewReview] = useState({ rating: 5, comment: "" });
   const [showDetailedPreview, setShowDetailedPreview] = useState(false);
 
-  const { Razorpay } = useRazorpay();
+  const { Razorpay, isLoading: isRazorpayLoading } = useRazorpay();
+  
+  // ✅ FIX: Use ref to prevent double opening
+  const paymentInstance = useRef(null);
 
   // --- LOGIC: Fetch Data & Check Status ---
   useEffect(() => {
@@ -95,49 +97,94 @@ export default function ProductPage() {
     checkUserPurchase();
   }, [productId, isAuthenticated]);
 
-  useEffect(() => {
-    const fetchProduct = async () => {
+    const fetchAllData = async () => {
       try {
+        // 1. Fetch Public Product Data
         const res = await fetch(`${API_URL}/api/products/${productId}`);
         const data = await res.json();
+
+        if (!res.ok) throw new Error("Product not found");
+
         setProduct(data.product || data);
 
+        // Fetch Variants
         const variantsRes = await fetch(`${API_URL}/api/products/${productId}/variants`);
         const variantsData = await variantsRes.json();
-        setVariants(variantsData);
         if (variantsData.length > 0) {
           setSelectedVariant(variantsData[0]);
         }
 
-        // Load Reviews initially
+        // Fetch Reviews
         const reviewsRes = await fetch(`${API_URL}/api/reviews/product/${productId}`);
         const reviewsData = await reviewsRes.json();
         setReviews(reviewsData.reviews || []);
         setReviewStats(reviewsData.stats || { avg: 0, count: 0, distribution: {} });
 
+        // 2. Fetch Protected Data (Only if logged in)
         if (isAuthenticated) {
-          // Check if user already reviewed (logic depends on backend, simplified here)
-          // Ideally backend sends a flag or we filter frontend
+          const token = getAccessToken();
+
+          // Check Purchase
+          try {
+            const purchaseRes = await fetch(`${API_URL}/api/purchases/check/${productId}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            if (purchaseRes.ok) {
+              const pData = await purchaseRes.json();
+              if (pData.hasPurchased) {
+                setHasPurchased(true);
+                setPurchaseData(pData.purchase);
+              }
+            }
+          } catch (e) { console.warn("Purchase check failed", e); }
+
+          // Check if User Reviewed
+          const myReview = reviewsData.reviews?.find((r) => r.user_id === user?.id);
+          if (myReview) setUserReview(myReview);
         }
 
       } catch (error) {
         console.error("Failed to fetch product:", error);
       } finally {
-        setLoading(false);
+        setDataLoading(false);
       }
     };
 
-    fetchProduct();
-  }, [productId, isAuthenticated]);
+    fetchAllData();
+  }, [productId, isAuthenticated, authLoading, user?.id]);
 
   // --- HANDLERS ---
   const handleBuyNow = async () => {
-    if (!isAuthenticated) { navigate("/login"); return; }
-    if (hasPurchased) { navigate(`/download/${purchaseData.id}`); return; }
+    // ✅ SECURITY CHECK: Block if window is already active
+    if (paymentInstance.current) {
+        console.log("Payment window already active.");
+        return;
+    }
+
+    if (!isAuthenticated) {
+      localStorage.setItem("redirectAfterLogin", window.location.pathname);
+      navigate("/login");
+      return;
+    }
+
+    if (hasPurchased) {
+      navigate(`/download/${purchaseData.id}`);
+      return;
+    }
+
+    if (isRazorpayLoading || !Razorpay) {
+      console.error("Razorpay SDK not loaded yet.");
+      toast.error("Payment system is loading, please try again in a second.");
+      return;
+    }
 
     setBuying(true);
+
     try {
+      console.log("Initiating Checkout...");
       const token = getAccessToken();
+
+      // Create Order on Backend
       const res = await fetch(`${API_URL}/api/purchases/checkout/razorpay`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -145,17 +192,39 @@ export default function ProductPage() {
       });
 
       const orderData = await res.json();
+      console.log("Backend Order Response:", orderData);
+
       if (!res.ok) throw new Error(orderData.error || "Failed to create order");
 
+      // Verify Key ID exists
+      const keyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
+      if (!keyId) {
+        throw new Error("Razorpay Key ID is missing in frontend env variables");
+      }
+
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        key: keyId,
         amount: orderData.amount,
         currency: orderData.currency,
         name: "Anarchy Bay",
         description: `Purchase of ${product.name}`,
         image: "/favicon_io/android-chrome-512x512.png",
         order_id: orderData.orderId,
+        
+        // ✅ CRITICAL: Reset state if user closes popup manually
+        modal: {
+            ondismiss: function() {
+                console.log("Payment window closed by user");
+                setBuying(false);
+                paymentInstance.current = null;
+            }
+        },
+
         handler: async (response) => {
+          // Reset ref on success processing
+          paymentInstance.current = null;
+          
+          console.log("Payment Success:", response);
           try {
             const verifyRes = await fetch(`${API_URL}/api/purchases/verify/razorpay`, {
               method: "POST",
@@ -166,15 +235,18 @@ export default function ProductPage() {
                 razorpay_signature: response.razorpay_signature,
               }),
             });
+
             if (verifyRes.ok) {
               const verifyData = await verifyRes.json();
               toast.success("Payment successful!");
               navigate(`/checkout/success?purchase_id=${verifyData.purchase.id}`);
             } else {
+              const errorData = await verifyRes.json();
+              console.error("Verification failed:", errorData);
               toast.error("Payment verification failed");
             }
           } catch (err) {
-            console.error(err);
+            console.error("Verification Error:", err);
             toast.error("Error verifying payment");
           }
         },
@@ -182,13 +254,28 @@ export default function ProductPage() {
         theme: { color: "#000000" },
       };
 
+      console.log("Opening Razorpay...");
       const rzp = new Razorpay(options);
+
+      // ✅ Store instance to prevent duplicates
+      paymentInstance.current = rzp;
+
+      rzp.on('payment.failed', function (response) {
+        console.error("Payment UI Failed:", response.error);
+        toast.error(response.error.description || "Payment failed");
+        setBuying(false);
+        paymentInstance.current = null;
+      });
+
       rzp.open();
+
     } catch (err) {
+      console.error("Handle Buy Now Error:", err);
       toast.error(err.message || "Payment failed");
-    } finally {
       setBuying(false);
+      paymentInstance.current = null;
     }
+    // Note: No finally block here because state is handled in callbacks
   };
 
   const handleAddToWishlist = async () => {
@@ -316,7 +403,7 @@ export default function ProductPage() {
   };
 
   // --- RENDER LOADERS ---
-  if (loading) {
+  if (dataLoading || authLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <NavBar />
@@ -357,7 +444,7 @@ export default function ProductPage() {
   const shortDesc = product.short_description || product.description?.slice(0, 200) || "";
   const longDesc = product.long_description || product.description || "";
   const coverImage = product.thumbnail_url || product.image_url?.[0];
-  const pageColor = product.page_color || "#f3f4f6"; // Default slightly gray if null
+  const pageColor = product.page_color || "#f3f4f6";
   const accentColor = product.accent_color || "#ffde59";
   const buttonColor = product.button_color || "#ec4899";
   const textColor = product.text_color || "#000000";

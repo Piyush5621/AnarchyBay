@@ -29,6 +29,7 @@ import AuthCallbackPage from './components/auth/AuthCallbackPage.jsx';
 import VerifyEmailPage from './components/auth/VerifyEmailPage.jsx';
 import { Contact } from 'lucide-react';
 import Contacts from './components/Contacts.jsx';
+import ProPlanComingSoon from './components/ProPlanComingSoon.jsx';
 
 
 function App() {
@@ -62,6 +63,7 @@ function App() {
         <Route path="/help" element={<HelpCenterPage />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/contact" element={<Contacts />} />
+        <Route path="/comingsoon" element={<ProPlanComingSoon />} />
 
       </Routes>
     </BrowserRouter>
