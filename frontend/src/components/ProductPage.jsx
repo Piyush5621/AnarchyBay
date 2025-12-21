@@ -55,6 +55,22 @@ export default function ProductPage() {
 
   const { Razorpay } = useRazorpay();
 
+  // Share handler
+  const handleShare = (platform) => {
+    const url = window.location.href;
+    const text = `Check out this asset on Anarchy Bay!`;
+    if (platform === "twitter") {
+      window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, "_blank");
+    } else if (platform === "facebook") {
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, "_blank");
+    } else if (platform === "linkedin") {
+      window.open(`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(url)}&title=${encodeURIComponent(text)}`, "_blank");
+    } else if (platform === "copy") {
+      navigator.clipboard.writeText(url);
+      toast.success("Link copied to clipboard!");
+    }
+  };
+
   useEffect(() => {
     const checkUserPurchase = async () => {
       if (isAuthenticated && productId) {
