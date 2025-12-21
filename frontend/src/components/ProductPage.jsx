@@ -9,10 +9,10 @@ import { useRazorpay } from "react-razorpay";
 const COMMENT_CHAR_LIMIT = 500;
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
-// --- ICONS ---
+// --- ICONS (Kept same as before) ---
 const Icons = {
   Check: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>,
-  Star: ({ filled, half }) => (
+  Star: ({ filled }) => (
     <svg className={`w-5 h-5 ${filled ? "fill-[var(--yellow-400)] text-black" : "fill-gray-200 text-gray-400"}`} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
     </svg>
@@ -25,6 +25,7 @@ const Icons = {
   Back: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
 };
 
+// --- MARKDOWN RENDERER ---
 function renderMarkdown(text) {
   if (!text) return "";
   let html = text
@@ -45,16 +46,15 @@ function renderMarkdown(text) {
 export default function ProductPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  // ✅ FIX 1: Destructure loading from useAuth to prevent premature fetches
+  const { isAuthenticated, user, loading: authLoading } = useAuth();
   
   // State
   const [hasPurchased, setHasPurchased] = useState(false);
   const [purchaseData, setPurchaseData] = useState(null);
-  const [checkingPurchase, setCheckingPurchase] = useState(true); // eslint-disable-line
   const [product, setProduct] = useState(null);
-  const [variants, setVariants] = useState([]); // eslint-disable-line
   const [selectedVariant, setSelectedVariant] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true); // Renamed from loading to differentiate from authLoading
   const [buying, setBuying] = useState(false);
   const [inWishlist, setInWishlist] = useState(false);
   const [reviews, setReviews] = useState([]);
@@ -70,69 +70,73 @@ export default function ProductPage() {
 
   // --- LOGIC: Fetch Data & Check Status ---
   useEffect(() => {
-    const checkUserPurchase = async () => {
-      if (isAuthenticated && productId) {
-        try {
-          const token = getAccessToken();
-          const res = await fetch(`${API_URL}/api/purchases/check/${productId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          const data = await res.json();
-          if (data.hasPurchased) {
-            setHasPurchased(true);
-            setPurchaseData(data.purchase);
-          }
-        } catch (err) {
-          console.error("Error checking purchase:", err);
-        } finally {
-          setCheckingPurchase(false);
-        }
-      } else {
-        setCheckingPurchase(false);
-      }
-    };
-    
-    checkUserPurchase();
-  }, [productId, isAuthenticated]);
+    // ✅ FIX 2: Wait for auth to finish loading before deciding what to fetch
+    if (authLoading) return;
 
-  useEffect(() => {
-    const fetchProduct = async () => {
+    const fetchAllData = async () => {
       try {
-      const res = await fetch(`${API_URL}/api/products/${productId}`);
-      const data = await res.json();
-      setProduct(data.product || data);
-      
-      const variantsRes = await fetch(`${API_URL}/api/products/${productId}/variants`);
+        // 1. Fetch Public Product Data
+        const res = await fetch(`${API_URL}/api/products/${productId}`);
+        const data = await res.json();
+        
+        if (!res.ok) throw new Error("Product not found");
+        
+        setProduct(data.product || data);
+        
+        // Fetch Variants
+        const variantsRes = await fetch(`${API_URL}/api/products/${productId}/variants`);
         const variantsData = await variantsRes.json();
-        setVariants(variantsData);
         if (variantsData.length > 0) {
           setSelectedVariant(variantsData[0]);
         }
 
-        // Load Reviews initially
+        // Fetch Reviews
         const reviewsRes = await fetch(`${API_URL}/api/reviews/product/${productId}`);
         const reviewsData = await reviewsRes.json();
         setReviews(reviewsData.reviews || []);
         setReviewStats(reviewsData.stats || { avg: 0, count: 0, distribution: {} });
         
+        // 2. Fetch Protected Data (Only if logged in)
         if (isAuthenticated) {
-            // Check if user already reviewed (logic depends on backend, simplified here)
-            // Ideally backend sends a flag or we filter frontend
+          const token = getAccessToken();
+          
+          // Check Purchase
+          try {
+            const purchaseRes = await fetch(`${API_URL}/api/purchases/check/${productId}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            if (purchaseRes.ok) {
+              const pData = await purchaseRes.json();
+              if (pData.hasPurchased) {
+                setHasPurchased(true);
+                setPurchaseData(pData.purchase);
+              }
+            }
+          } catch (e) { console.warn("Purchase check failed", e); }
+
+          // Check if User Reviewed
+          const myReview = reviewsData.reviews?.find((r) => r.user_id === user?.id);
+          if (myReview) setUserReview(myReview);
         }
 
       } catch (error) {
         console.error("Failed to fetch product:", error);
       } finally {
-        setLoading(false);
+        setDataLoading(false);
       }
     };
 
-    fetchProduct();
-  }, [productId, isAuthenticated]);
+    fetchAllData();
+  }, [productId, isAuthenticated, authLoading, user?.id]); // ✅ FIX 3: Correct dependencies
 
   // --- HANDLERS ---
   const handleBuyNow = async () => {
-    if (!isAuthenticated) { navigate("/login"); return; }
+    if (!isAuthenticated) { 
+        // Store current URL to redirect back after login
+        localStorage.setItem("redirectAfterLogin", window.location.pathname);
+        navigate("/login"); 
+        return; 
+    }
     if (hasPurchased) { navigate(`/download/${purchaseData.id}`); return; }
 
     setBuying(true);
@@ -284,7 +288,7 @@ export default function ProductPage() {
   };
 
   // --- RENDER LOADERS ---
-  if (loading) {
+  if (dataLoading || authLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <NavBar />
@@ -325,7 +329,7 @@ export default function ProductPage() {
   const shortDesc = product.short_description || product.description?.slice(0, 200) || "";
   const longDesc = product.long_description || product.description || "";
   const coverImage = product.thumbnail_url || product.image_url?.[0];
-  const pageColor = product.page_color || "#f3f4f6"; // Default slightly gray if null
+  const pageColor = product.page_color || "#f3f4f6"; 
   const accentColor = product.accent_color || "#ffde59";
   const buttonColor = product.button_color || "#ec4899";
   const textColor = product.text_color || "#000000";
@@ -387,7 +391,7 @@ export default function ProductPage() {
                         onClick={() => setShowDetailedPreview(true)}
                         className="absolute bottom-4 right-4 px-6 py-2 bg-black text-white font-bold uppercase border-2 border-white shadow-[4px_4px_0px_black] hover:scale-105 transition-transform flex items-center gap-2"
                       >
-                         <Icons.Play /> Preview Media
+                          <Icons.Play /> Preview Media
                       </button>
                     )}
                   </div>
@@ -436,8 +440,8 @@ export default function ProductPage() {
                         </div>
                     </div>
                     <div className="bg-gray-50 border-2 border-black p-4">
-                         <h3 className="font-black uppercase text-sm mb-2 text-gray-400">File Type</h3>
-                         <div className="flex items-center gap-2 font-bold">
+                          <h3 className="font-black uppercase text-sm mb-2 text-gray-400">File Type</h3>
+                          <div className="flex items-center gap-2 font-bold">
                              <div className="bg-[var(--yellow-400)] p-1 border border-black"><span className="text-xs">ZIP</span></div>
                              <span>{product.files?.[0]?.content_type?.split("/")[1]?.toUpperCase() || "Digital Download"}</span>
                         </div>
@@ -455,12 +459,12 @@ export default function ProductPage() {
 
               {/* --- REVIEWS SECTION --- */}
               <div className="bg-white border-[3px] border-black shadow-[8px_8px_0px_black] p-8">
-                 <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center justify-between mb-8">
                     <h2 className="font-black text-3xl uppercase">Customer Reviews</h2>
                     <div className="hidden md:block h-1 flex-1 bg-black mx-4"></div>
-                 </div>
+                  </div>
 
-                 <div className="grid md:grid-cols-3 gap-8 mb-10">
+                  <div className="grid md:grid-cols-3 gap-8 mb-10">
                     {/* Score Card */}
                     <div className="bg-[var(--pink-50)] border-[3px] border-black p-6 text-center flex flex-col justify-center shadow-[4px_4px_0px_black]">
                         <div className="text-6xl font-black mb-2">{reviewStats.avg.toFixed(1)}</div>
@@ -472,68 +476,68 @@ export default function ProductPage() {
 
                     {/* Distribution Bars */}
                     <div className="md:col-span-2 flex flex-col justify-center space-y-3">
-                         {[5,4,3,2,1].map(stars => (
+                          {[5,4,3,2,1].map(stars => (
                              <div key={stars} className="flex items-center gap-3">
                                  <span className="font-bold text-sm w-8">{stars} ★</span>
                                  <div className="flex-1 h-3 bg-gray-200 border border-black rounded-full overflow-hidden">
                                      <div 
-                                        className="h-full bg-black" 
-                                        style={{ width: `${reviewStats.count ? ((reviewStats.distribution[stars] || 0) / reviewStats.count) * 100 : 0}%` }} 
-                                     />
+                                         className="h-full bg-black" 
+                                         style={{ width: `${reviewStats.count ? ((reviewStats.distribution[stars] || 0) / reviewStats.count) * 100 : 0}%` }} 
+                                      />
                                  </div>
                                  <span className="text-xs font-bold w-6 text-right">{reviewStats.distribution[stars] || 0}</span>
                              </div>
-                         ))}
+                          ))}
                     </div>
-                 </div>
+                  </div>
                 
-                 {/* Review Form */}
-                 {!userReview && isAuthenticated && !isCreator && (
-                     <form onSubmit={handleSubmitReview} className="mb-10 bg-gray-50 border-2 border-dashed border-black p-6">
-                        <h3 className="font-bold text-lg uppercase mb-4">Leave a Review</h3>
-                        <div className="flex gap-2 mb-4">
-                            {[1,2,3,4,5].map(star => (
-                                <button key={star} type="button" onClick={() => setNewReview(prev => ({...prev, rating: star}))} className="hover:scale-110 transition-transform">
-                                     <Icons.Star filled={star <= newReview.rating} />
-                                </button>
-                            ))}
-                        </div>
-                        <textarea 
-                            value={newReview.comment}
-                            onChange={e => setNewReview(r => ({ ...r, comment: e.target.value }))}
-                            className="w-full p-4 border-2 border-black font-medium focus:outline-none focus:shadow-[4px_4px_0px_var(--pink-400)] transition-shadow mb-4"
-                            rows={3}
-                            placeholder="How was the product?"
-                        />
-                        <button type="submit" disabled={submittingReview} className="px-6 py-2 bg-black text-white font-bold uppercase border-2 border-black hover:bg-[var(--pink-500)] transition-colors disabled:opacity-50">
-                            {submittingReview ? "Submitting..." : "Post Review"}
-                        </button>
-                     </form>
-                 )}
+                  {/* Review Form */}
+                  {!userReview && isAuthenticated && !isCreator && (
+                      <form onSubmit={handleSubmitReview} className="mb-10 bg-gray-50 border-2 border-dashed border-black p-6">
+                         <h3 className="font-bold text-lg uppercase mb-4">Leave a Review</h3>
+                         <div className="flex gap-2 mb-4">
+                             {[1,2,3,4,5].map(star => (
+                                 <button key={star} type="button" onClick={() => setNewReview(prev => ({...prev, rating: star}))} className="hover:scale-110 transition-transform">
+                                      <Icons.Star filled={star <= newReview.rating} />
+                                 </button>
+                             ))}
+                         </div>
+                         <textarea 
+                             value={newReview.comment}
+                             onChange={e => setNewReview(r => ({ ...r, comment: e.target.value }))}
+                             className="w-full p-4 border-2 border-black font-medium focus:outline-none focus:shadow-[4px_4px_0px_var(--pink-400)] transition-shadow mb-4"
+                             rows={3}
+                             placeholder="How was the product?"
+                         />
+                         <button type="submit" disabled={submittingReview} className="px-6 py-2 bg-black text-white font-bold uppercase border-2 border-black hover:bg-[var(--pink-500)] transition-colors disabled:opacity-50">
+                             {submittingReview ? "Submitting..." : "Post Review"}
+                         </button>
+                      </form>
+                  )}
 
-                 {/* Reviews List */}
-                 <div className="space-y-6">
-                    {reviews.map(review => (
-                        <div key={review.id} className="border-2 border-black p-5 bg-white shadow-[4px_4px_0px_gray]">
-                            <div className="flex justify-between items-start mb-3">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-[var(--yellow-200)] border-2 border-black rounded-full flex items-center justify-center font-bold">
-                                        {(review.user?.name || "U").charAt(0)}
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-sm">{review.user?.name || "Anonymous"}</p>
-                                        <div className="flex text-xs">
-                                             {[...Array(5)].map((_, i) => <Icons.Star key={i} filled={i < review.rating} />)}
-                                        </div>
-                                    </div>
-                                </div>
-                                <span className="text-xs text-gray-400 font-bold">{new Date(review.created_at).toLocaleDateString()}</span>
-                            </div>
-                            <p className="text-gray-700 leading-relaxed">{review.comment}</p>
-                        </div>
-                    ))}
-                    {reviews.length === 0 && <p className="text-center italic text-gray-500">No reviews yet. Be the first!</p>}
-                 </div>
+                  {/* Reviews List */}
+                  <div className="space-y-6">
+                     {reviews.map(review => (
+                         <div key={review.id} className="border-2 border-black p-5 bg-white shadow-[4px_4px_0px_gray]">
+                             <div className="flex justify-between items-start mb-3">
+                                 <div className="flex items-center gap-3">
+                                     <div className="w-10 h-10 bg-[var(--yellow-200)] border-2 border-black rounded-full flex items-center justify-center font-bold">
+                                         {(review.user?.name || "U").charAt(0)}
+                                     </div>
+                                     <div>
+                                         <p className="font-bold text-sm">{review.user?.name || "Anonymous"}</p>
+                                         <div className="flex text-xs">
+                                              {[...Array(5)].map((_, i) => <Icons.Star key={i} filled={i < review.rating} />)}
+                                         </div>
+                                     </div>
+                                 </div>
+                                 <span className="text-xs text-gray-400 font-bold">{new Date(review.created_at).toLocaleDateString()}</span>
+                             </div>
+                             <p className="text-gray-700 leading-relaxed">{review.comment}</p>
+                         </div>
+                     ))}
+                     {reviews.length === 0 && <p className="text-center italic text-gray-500">No reviews yet. Be the first!</p>}
+                  </div>
               </div>
             </div>
 
@@ -557,7 +561,7 @@ export default function ProductPage() {
                         disabled={buying}
                         className="w-full py-4 bg-[var(--pink-500)] text-white font-black uppercase text-xl border-[3px] border-black shadow-[4px_4px_0px_black] hover:-translate-y-1 hover:shadow-[6px_6px_0px_black] active:translate-y-0 active:shadow-[2px_2px_0px_black] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                         {buying ? "Processing..." : hasPurchased ? "Download Now" : "Buy Now"}
+                          {buying ? "Processing..." : hasPurchased ? "Download Now" : "Buy Now"}
                       </button>
                       
                       <button 
@@ -565,7 +569,7 @@ export default function ProductPage() {
                         style={{ backgroundColor: !inCart ? buttonColor : undefined }}
                         className={`w-full py-3 font-bold uppercase border-[3px] border-black transition-all flex items-center justify-center gap-2 ${inCart ? 'bg-[var(--mint)] shadow-none translate-y-[2px]' : 'text-white shadow-[4px_4px_0px_black] hover:-translate-y-1 hover:shadow-[6px_6px_0px_black]'}`}
                       >
-                         <Icons.Cart /> {inCart ? "In Cart" : "Add to Cart"}
+                          <Icons.Cart /> {inCart ? "In Cart" : "Add to Cart"}
                       </button>
                   </div>
 
@@ -575,7 +579,7 @@ export default function ProductPage() {
                         onClick={handleAddToWishlist}
                         className={`py-2 font-bold uppercase text-xs border-2 border-black flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors ${inWishlist ? 'bg-[var(--pink-100)] text-[var(--pink-600)]' : 'bg-white'}`}
                       >
-                         <Icons.Heart filled={inWishlist} /> {inWishlist ? 'Saved' : 'Wishlist'}
+                          <Icons.Heart filled={inWishlist} /> {inWishlist ? 'Saved' : 'Wishlist'}
                       </button>
                       <div className="relative">
                           <button 
@@ -604,7 +608,7 @@ export default function ProductPage() {
 
                   {/* Security Badge */}
                   <div className="mt-6 flex flex-col items-center gap-2 text-center">
-                       <div className="flex gap-2 opacity-50 grayscale">
+                        <div className="flex gap-2 opacity-50 grayscale">
                           <div className="h-6 w-8 bg-gray-300 rounded"></div>
                           <div className="h-6 w-8 bg-gray-300 rounded"></div>
                           <div className="h-6 w-8 bg-gray-300 rounded"></div>
