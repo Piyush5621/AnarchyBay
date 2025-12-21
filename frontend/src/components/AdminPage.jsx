@@ -197,10 +197,40 @@ export default function AdminPage() {
                       <AdminStatCard title="Active Assets" value={stats.totalProducts} icon={<Package size={20} className="text-[#FF9500]" />} />
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Revenue Expansion Chart */}
-                        <div className="lg:col-span-2 bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-sm">
-                          <div className="flex items-center justify-between mb-8">
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                          {/* Infrastructure Health - Radial Charts */}
+                          <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-sm">
+                            <h3 className="text-xl font-bold mb-8">Infrastructure Health</h3>
+                            <div className="h-[300px] w-full relative">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <RadialBarChart 
+                                        cx="50%" cy="50%" 
+                                        innerRadius="30%" outerRadius="100%" 
+                                        barSize={15} 
+                                        data={[
+                                            { name: 'Stability', value: 98, fill: '#32D74B' },
+                                            { name: 'Throughput', value: 85, fill: '#0071E3' },
+                                            { name: 'Redundancy', value: 70, fill: '#AF52DE' },
+                                            { name: 'Uptime', value: 99, fill: '#FF9500' }
+                                        ]}
+                                    >
+                                        <RadialBar
+                                            minAngle={15}
+                                            label={{ position: 'insideStart', fill: '#fff', fontSize: 10, fontWeight: 'bold' }}
+                                            background
+                                            clockWise
+                                            dataKey="value"
+                                            cornerRadius={10}
+                                        />
+                                        <Legend iconSize={10} layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{fontSize: '10px', fontWeight: 'bold'}} />
+                                    </RadialBarChart>
+                                </ResponsiveContainer>
+                            </div>
+                          </div>
+
+                          {/* Revenue Expansion Chart */}
+                          <div className="lg:col-span-2 bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-sm">
+                            <div className="flex items-center justify-between mb-8">
                             <h3 className="text-xl font-bold">Revenue Projections</h3>
                             <div className="flex gap-4">
                                 <LegendItem color="bg-[#0071E3]" label="Gross Flow" />

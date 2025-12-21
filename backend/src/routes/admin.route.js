@@ -64,14 +64,14 @@ router.get("/users", requireAuth, requireRole('admin'), async (req, res) => {
     // Total sales and revenue per creator
     const { data: earningsData } = await supabase
       .from('purchases')
-      .select('amount, platform_fee, creator_earnings, products(creator_id)')
-      .in('products.creator_id', userIds)
+      .select('amount, platform_fee, creator_earnings, seller_id')
+      .in('seller_id', userIds)
       .eq('status', 'completed');
 
     // Group earnings by creator
     const earningsMap = {};
     earningsData?.forEach(p => {
-      const creatorId = p.products?.creator_id;
+      const creatorId = p.seller_id;
       if (!earningsMap[creatorId]) {
         earningsMap[creatorId] = { totalSales: 0, totalEarnings: 0, salesCount: 0 };
       }

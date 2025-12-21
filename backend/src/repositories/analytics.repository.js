@@ -73,10 +73,9 @@ export const getSalesOverTime = async (creatorId, options = {}) => {
     .from("purchases")
     .select(`
       amount,
-      purchased_at,
-      products!inner(creator_id)
+      purchased_at
     `)
-    .eq("products.creator_id", creatorId)
+    .eq("seller_id", creatorId)
     .eq("status", "completed")
     .order("purchased_at", { ascending: true });
 
@@ -125,9 +124,9 @@ export const getTopProducts = async (creatorId, options = {}) => {
     .select(`
       product_id,
       amount,
-      products!inner(id, name, creator_id)
+      products!inner(id, name)
     `)
-    .eq("products.creator_id", creatorId)
+    .eq("seller_id", creatorId)
     .eq("status", "completed");
 
   if (startDate) {
@@ -168,10 +167,9 @@ export const getCreatorBalance = async (creatorId) => {
   const { data: purchases, error: purchasesError } = await supabase
     .from("purchases")
     .select(`
-      creator_earnings,
-      products!inner(creator_id)
+      creator_earnings
     `)
-    .eq("products.creator_id", creatorId)
+    .eq("seller_id", creatorId)
     .eq("status", "completed");
 
   if (purchasesError) return { error: purchasesError };

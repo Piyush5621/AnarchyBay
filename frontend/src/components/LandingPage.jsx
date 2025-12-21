@@ -7,6 +7,9 @@ import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { CreditCard, Zap, Key, BarChart3, Palette, Rocket } from 'lucide-react';
 import { MacbookScroll } from "./ui/macbook-scroll";
 import HeroScrollDemo from "./container-scroll-animation-demo";
+import { Accordion05 } from "./ui/accordion-05";
+import CircularGallery from "./ui/circular-flip-card-gallery";
+import { HeroOrbitDeck } from "./ui/hero-modern";
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -27,13 +30,27 @@ export default function LandingPage() {
         <main className="pt-20">
           <HeroSection navigate={navigate} isAuthenticated={isAuthenticated} />
           <MarqueeSection />
-        <FeaturesSection />
-        <ProductsSection products={products} navigate={navigate} />
-        <HowItWorksSection />
-        <MacbookScrollSection />
-        <PricingSection navigate={navigate} isAuthenticated={isAuthenticated} />
-        <CTASection navigate={navigate} isAuthenticated={isAuthenticated} />
-      </main>
+          <HeroOrbitDeck />
+          <FeaturesSection />
+            <ProductsSection products={products} navigate={navigate} />
+            
+            <section className="bg-white overflow-hidden">
+              <CircularGallery />
+            </section>
+
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 py-20 bg-white">
+              <div className="mb-10 text-center">
+                <span className="inline-block px-4 py-2 bg-pink-500 text-white border-2 border-black font-black text-sm uppercase mb-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">FAQs</span>
+                <h2 className="text-4xl md:text-5xl font-black uppercase leading-tight">Got Questions? <br/> We've Got Bit-sized Answers.</h2>
+              </div>
+              <div className="max-w-3xl mx-auto">
+                <Accordion05 />
+              </div>
+            </section>
+          <MacbookScrollSection />
+          <PricingSection navigate={navigate} isAuthenticated={isAuthenticated} />
+          <CTASection navigate={navigate} isAuthenticated={isAuthenticated} />
+        </main>
 
       <Footer />
     </div>
