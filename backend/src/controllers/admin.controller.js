@@ -13,7 +13,8 @@ export const getStats = async (req, res) => {
       { data: recentPurchases },
       { data: topProducts },
       { data: recentUsers },
-      { data: totalRevenue }
+      // 1. Fetch all sales data instead of calling .rpc()
+      { data: allSales } 
     ] = await Promise.all([
       supabase.from('profiles').select('*', { count: 'exact', head: true }),
       supabase.from('products').select('*', { count: 'exact', head: true }).eq('is_active', true),
@@ -35,15 +36,21 @@ export const getStats = async (req, res) => {
         .order('created_at', { ascending: false })
         .limit(10),
         
-      supabase.rpc('get_total_revenue') 
+      // 2. CHANGE THIS LINE: Select the price/amount column from your purchases table
+      // If your 'purchases' table relies on 'products' for price, use: .select('products(price)')
+      supabase.from('purchases').select('price') 
     ]);
+
+    // 3. Calculate the sum manually in JavaScript
+    // Note: Ensure 'item.price' matches your database column name (e.g. 'amount', 'total_price')
+    const totalRevenueCalc = allSales?.reduce((sum, item) => sum + (Number(item.price) || 0), 0) || 0;
 
     return res.json({
       stats: {
         totalUsers: totalUsers || 0,
         totalProducts: totalProducts || 0,
         totalPurchases: totalPurchases || 0,
-        totalRevenue: totalRevenue || 0, 
+        totalRevenue: totalRevenueCalc, // 4. Use the calculated value
       },
       recentPurchases: recentPurchases || [],
       topProducts: topProducts || [],
@@ -55,6 +62,7 @@ export const getStats = async (req, res) => {
     return res.status(500).json({ error: 'Failed to fetch admin stats' });
   }
 };
+
 
 // ================= USER MANAGEMENT =================
 export const getUsers = async (req, res) => {
