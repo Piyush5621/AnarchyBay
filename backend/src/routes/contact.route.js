@@ -1,31 +1,26 @@
 import { Router } from "express";
-import { supabase } from "../lib/supabase.js";
 import { rateLimiters } from "../middleware/rateLimiter.js";
+// ✅ Import the controller functions
+import * as ContactController from "../controllers/contact.controller.js";
+// ✅ Import auth middleware if you want to protect the "View All" route
+import { requireAuth, requireRole } from "../middleware/auth.js";
 
 const router = Router();
 
-router.post("/", rateLimiters.api, async (req, res) => {
-  try {
-    const { name, email, subject, message } = req.body;
+// POST /api/contact - Public route for users to send messages
+router.post(
+  "/", 
+  rateLimiters.api, 
+  ContactController.submitContactController
+);
 
-    if (!name || !email || !message) {
-      return res.status(400).json({ message: "Missing required fields" });
-    }
-
-    const { error } = await supabase
-      .from("contact_messages")
-      .insert([{ name, email, subject, message }]);
-
-    if (error) {
-      console.error("Contact insert error:", error);
-      return res.status(500).json({ message: "Database error" });
-    }
-
-    return res.status(201).json({ message: "Message sent successfully" });
-  } catch (err) {
-    console.error("Contact route crash:", err);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
+// GET /api/contact - Admin only route to view messages
+// (I added auth middleware here because you don't want the public reading these!)
+router.get(
+  "/", 
+  requireAuth, 
+  requireRole("admin"), 
+  ContactController.getAllContactMessages
+);
 
 export default router;

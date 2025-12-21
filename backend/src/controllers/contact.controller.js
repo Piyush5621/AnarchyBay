@@ -1,5 +1,6 @@
-import { submitContactService } from "../services/contact.service.js";
-import { getAllContactMessagesService } from "../services/contact.service.js";
+// ✅ Update the import to match your improved Service
+import { submitContactService, getContactMessagesService } from "../services/contact.service.js";
+
 export const submitContactController = async (req, res) => {
   try {
     const { name, email, subject, message } = req.body;
@@ -34,13 +35,23 @@ export const submitContactController = async (req, res) => {
   }
 };
 
+// ✅ UPGRADED: Now supports Pagination (Page 1, 2, 3...)
 export const getAllContactMessages = async (req, res) => {
   try {
-    const messages = await getAllContactMessagesService();
+    const { page = 1, limit = 20 } = req.query;
+
+    // Pass pagination params to the service
+    const { data, count } = await getContactMessagesService({ 
+      page: parseInt(page), 
+      limit: parseInt(limit) 
+    });
 
     return res.status(200).json({
       success: true,
-      data: messages,
+      data: data || [],
+      total: count,
+      page: parseInt(page),
+      limit: parseInt(limit)
     });
   } catch (error) {
     console.error("Fetch contact messages error:", error);
