@@ -1,18 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, ShoppingBag, User, Hash } from "lucide-react";
+import { Search, ShoppingBag, User, Hash, AlertCircle } from "lucide-react";
+import { getAccessToken } from "@/lib/api/client"; // ✅ Import this to fix Auth issues
 
 const BANGS = {
-  "!p": { type: "products", label: "Products", icon: ShoppingBag, endpoint: "/api/products/list" },
-  "!c": { type: "creators", label: "Creators", icon: User, endpoint: "/api/profile/search" },
-  "!t": { type: "tags", label: "Tags", icon: Hash, endpoint: "/api/products/list" },
+  "!p": { type: "products", label: "Products", icon: ShoppingBag },
+  "!c": { type: "creators", label: "Creators", icon: User },
+  "!t": { type: "tags", label: "Tags", icon: Hash },
 };
 
 // Parse advanced search filters
 const parseFilters = (query) => {
   const filters = { text: "", priceMin: null, priceMax: null };
   
-  // Extract price filters: <500, >100, 100-500
   const priceLessThan = query.match(/<(\d+)/);
   const priceGreaterThan = query.match(/>(\d+)/);
   const priceRange = query.match(/(\d+)-(\d+)/);
@@ -37,7 +37,7 @@ const parseFilters = (query) => {
   return filters;
 };
 
-const initialState = { query: "", results: [], loading: false, selectedIndex: 0, activeBang: null };
+const initialState = { query: "", results: [], loading: false, selectedIndex: 0, activeBang: null, error: null };
 
 export default function SpotlightSearch({ isOpen, onClose }) {
   const navigate = useNavigate();
@@ -49,7 +49,7 @@ export default function SpotlightSearch({ isOpen, onClose }) {
 
   useEffect(() => {
     if (isOpen) {
-      setState((prevState) => ({ ...prevState, ...initialState })); // eslint-disable-line react-hooks/set-state-in-effect
+      setState((prevState) => ({ ...prevState, ...initialState }));
       const timer = setTimeout(() => inputRef.current?.focus(), 10);
       return () => clearTimeout(timer);
     }
@@ -74,87 +74,131 @@ export default function SpotlightSearch({ isOpen, onClose }) {
       return;
     }
 
-    setState(s => ({ ...s, loading: true }));
+    setState(s => ({ ...s, loading: true, error: null }));
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
     
-    try {
-      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-      
-      if (bangType === "products" || !bangType) {
-        // Build query params with price filters
-        const params = new URLSearchParams({
-          search: searchQuery,
-          limit: '8'
-        });
-        
+    // ✅ 1. Get Token for Headers
+    const token = getAccessToken();
+    const headers = {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }) // Add token if it exists
+    };
+
+    // --- HELPER: Fetch Products ---
+    const getProducts = async () => {
+      try {
+        const params = new URLSearchParams({ search: searchQuery, limit: '5' });
         if (filters.priceMin !== null) params.append('minPrice', filters.priceMin);
         if (filters.priceMax !== null) params.append('maxPrice', filters.priceMax);
-        
-        const res = await fetch(`${API_URL}/api/products/list?${params}`);
+
+        const res = await fetch(`${API_URL}/api/products/list?${params}`, { headers });
+        if (!res.ok) return [];
         const data = await res.json();
         
-        // Client-side filtering if backend doesn't support price filters
         let products = data.products || [];
-        if (filters.priceMin !== null) {
-          products = products.filter(p => p.price >= filters.priceMin);
-        }
-        if (filters.priceMax !== null) {
-          products = products.filter(p => p.price <= filters.priceMax);
-        }
-        
-        setState(s => ({
-          ...s,
-          loading: false,
-          results: products.map(p => ({
-            type: "product",
-            id: p.id,
-            name: p.name,
-            description: p.description?.slice(0, 80) || "",
-            price: p.price,
-            currency: p.currency,
-            image: p.thumbnail_url,
-          })),
+        if (filters.priceMin !== null) products = products.filter(p => p.price >= filters.priceMin);
+        if (filters.priceMax !== null) products = products.filter(p => p.price <= filters.priceMax);
+
+        return products.map(p => ({
+          type: "product",
+          id: p.id,
+          name: p.name,
+          description: p.description?.slice(0, 80) || "",
+          price: p.price,
+          currency: p.currency,
+          image: p.thumbnail_url,
         }));
-      } else if (bangType === "creators") {
-        const res = await fetch(
-          `${API_URL}/api/profile/search?q=${encodeURIComponent(searchQuery)}&limit=8`
-        );
-        const data = await res.json();
-        
-        setState(s => ({
-          ...s,
-          loading: false,
-          results: (data.profiles || []).map(p => ({
-            type: "creator",
-            id: p.user_id,
-            name: p.display_name || p.username,
-            username: p.username,
-            description: p.bio?.slice(0, 80) || "",
-            image: p.avatar_url,
-          })),
-        }));
-      } else if (bangType === "tags") {
-        const res = await fetch(
-          `${API_URL}/api/products/list?tags=${encodeURIComponent(searchQuery)}&limit=8`
-        );
-        const data = await res.json();
-        
-        setState(s => ({
-          ...s,
-          loading: false,
-          results: (data.products || []).map(p => ({
-            type: "product",
-            id: p.id,
-            name: p.name,
-            description: p.description?.slice(0, 80) || "",
-            price: p.price,
-            currency: p.currency,
-            image: p.thumbnail_url,
-          })),
-        }));
+      } catch (e) {
+        console.error("Product fetch error", e);
+        return [];
       }
+    };
+
+    // --- HELPER: Fetch Creators ---
+    const getCreators = async () => {
+      try {
+        // ✅ Changed 'q' to 'search' to match your Products API pattern
+        // ✅ Added headers so the backend knows who is asking
+        const res = await fetch(
+          `${API_URL}/api/profile/search?search=${encodeURIComponent(searchQuery)}&limit=5`,
+          { headers }
+        );
+        
+        // Debugging: Log what the server actually says
+        if (!res.ok) {
+          console.warn(`Creator API Error: ${res.status}`);
+          return [];
+        }
+
+        const data = await res.json();
+        console.log("Creator API Data:", data); // Check your console (F12) to see this!
+
+        const profiles = data.profiles || data.users || (Array.isArray(data) ? data : []);
+
+        return profiles.map(p => ({
+          type: "creator",
+          id: p.user_id || p.id,
+          name: p.display_name || p.name || p.username || "Unknown",
+          username: p.username,
+          description: p.bio ? p.bio.slice(0, 80) : "Creator",
+          image: p.avatar_url || p.avatar,
+        }));
+      } catch (e) {
+        console.error("Creator fetch error", e);
+        return [];
+      }
+    };
+
+    // --- HELPER: Fetch Tags ---
+    const getTags = async () => {
+      try {
+        const res = await fetch(
+          `${API_URL}/api/products/list?tags=${encodeURIComponent(searchQuery)}&limit=5`,
+          { headers }
+        );
+        if (!res.ok) return [];
+        const data = await res.json();
+        return (data.products || []).map(p => ({
+          type: "product",
+          id: p.id,
+          name: p.name,
+          description: `Tag match: ${searchQuery}`,
+          price: p.price,
+          currency: p.currency,
+          image: p.thumbnail_url,
+        }));
+      } catch (e) {
+        return [];
+      }
+    };
+
+    try {
+      let finalResults = [];
+
+      if (bangType === "products") {
+        finalResults = await getProducts();
+      } 
+      else if (bangType === "creators") {
+        finalResults = await getCreators();
+      } 
+      else if (bangType === "tags") {
+        finalResults = await getTags();
+      } 
+      else {
+        // Parallel Fetch for Speed
+        const [products, creators] = await Promise.all([
+          getProducts(),
+          getCreators()
+        ]);
+        // Combine: Creators first for visibility
+        finalResults = [...creators, ...products];
+      }
+
+      setState(s => ({ ...s, loading: false, results: finalResults }));
+
     } catch (err) {
       console.error("Search error:", err);
-      setState(s => ({ ...s, loading: false, results: [] }));
+      setState(s => ({ ...s, loading: false, results: [], error: "Search failed" }));
     }
   }, []);
 
@@ -162,13 +206,12 @@ export default function SpotlightSearch({ isOpen, onClose }) {
     let bangType = null;
     let searchQuery = query;
 
-    // Check for bang commands
     for (const [bang, config] of Object.entries(BANGS)) {
       if (query.startsWith(bang + " ")) {
         bangType = config.type;
         searchQuery = query.slice(bang.length + 1).trim();
         if (activeBang !== bangType) {
-          setState((s) => ({ ...s, activeBang: bangType })); // eslint-disable-line react-hooks/set-state-in-effect
+          setState((s) => ({ ...s, activeBang: bangType }));
         }
         break;
       }
@@ -179,7 +222,6 @@ export default function SpotlightSearch({ isOpen, onClose }) {
       bangType = null;
     }
 
-    // Parse filters for product searches
     const filters = bangType === "products" || !bangType ? parseFilters(searchQuery) : { text: searchQuery };
     searchQuery = filters.text;
 
@@ -212,7 +254,7 @@ export default function SpotlightSearch({ isOpen, onClose }) {
     if (item.type === "product") {
       navigate(`/product/${item.id}`);
     } else if (item.type === "creator") {
-      navigate(`/profile/u/${item.username}`);
+      navigate(`/profile/u/${item.username}`); // Ensure this matches your route
     }
     onClose();
   };
@@ -252,9 +294,10 @@ export default function SpotlightSearch({ isOpen, onClose }) {
             value={query}
             onChange={e => setState(s => ({ ...s, query: e.target.value, selectedIndex: 0 }))}
             onKeyDown={handleKeyDown}
-            placeholder="Quick Search"
+            placeholder="Search products or creators..."
             className="flex-1 text-[20px] bg-transparent outline-none placeholder:text-gray-400 text-gray-900 font-medium"
             style={{ caretColor: '#3b82f6' }}
+            autoFocus
           />
           <kbd className="hidden sm:flex items-center justify-center min-w-[32px] h-8 px-2.5 text-xs font-semibold bg-white/70 text-gray-600 rounded-lg border border-gray-300/50 shadow-sm">
             ⎋
@@ -287,14 +330,13 @@ export default function SpotlightSearch({ isOpen, onClose }) {
             </div>
             
             <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-              Price Filters
+              Examples
             </div>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { text: "!p laptop <500", desc: "Less than ₹500" },
-                { text: "!p mouse >100", desc: "Greater than ₹100" },
-                { text: "!p phone 100-500", desc: "Range ₹100-₹500" },
-                { text: "!c creator_name", desc: "Search creators" }
+                { text: "!p laptop <500", desc: "Filter products by price" },
+                { text: "!c john", desc: "Search specific creator" },
+                { text: "gaming", desc: "Search everything" }
               ].map((item, idx) => (
                 <div 
                   key={idx}
@@ -319,7 +361,7 @@ export default function SpotlightSearch({ isOpen, onClose }) {
           <div className="max-h-[55vh] overflow-y-auto py-2" ref={resultsRef}>
             {results.map((item, i) => (
               <button
-                key={item.id}
+                key={`${item.type}-${item.id}`}
                 onClick={() => handleSelect(item)}
                 className={`w-full px-5 py-3.5 flex items-center gap-4 text-left transition-all animate-fade-in-up ${
                   i === selectedIndex 
@@ -328,7 +370,7 @@ export default function SpotlightSearch({ isOpen, onClose }) {
                 }`}
                 style={{ animationDelay: `${i * 30}ms` }}
               >
-                <div className="w-14 h-14 flex-shrink-0 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center overflow-hidden shadow-sm">
+                <div className="w-14 h-14 flex-shrink-0 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center overflow-hidden shadow-sm relative">
                   {item.image ? (
                     <img src={item.image} alt="" className="w-full h-full object-cover" />
                   ) : (
@@ -336,6 +378,10 @@ export default function SpotlightSearch({ isOpen, onClose }) {
                       {item.name?.charAt(0)?.toUpperCase()}
                     </div>
                   )}
+                  {/* Badge to identify type */}
+                  <div className={`absolute bottom-0 right-0 p-1 rounded-tl-lg ${item.type === 'creator' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}`}>
+                    {item.type === 'creator' ? <User size={10} /> : <ShoppingBag size={10} />}
+                  </div>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-gray-900 truncate text-[15px]">
@@ -347,7 +393,7 @@ export default function SpotlightSearch({ isOpen, onClose }) {
                     </div>
                   )}
                   {item.type === "creator" && item.username && (
-                    <div className="text-xs text-gray-400 mt-0.5">@{item.username}</div>
+                    <div className="text-xs text-blue-600 font-medium mt-0.5">@{item.username}</div>
                   )}
                 </div>
                 {item.type === "product" && item.price && (

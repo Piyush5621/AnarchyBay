@@ -19,11 +19,8 @@ export default function AdminPage() {
   const [replyModal, setReplyModal] = useState(null);
   const [replyText, setReplyText] = useState("");
   const [expandedMessageId, setExpandedMessageId] = useState(null);
-  // ... existing states
-  const [contactFilter, setContactFilter] = useState("all"); // 'all', 'pending', 'replied'
-
-
-
+  
+  const [contactFilter, setContactFilter] = useState("all"); 
 
   useEffect(() => {
     if (!loading && (!isAuthenticated || role !== 'admin')) {
@@ -130,7 +127,7 @@ export default function AdminPage() {
   };
 
   const deactivateProduct = async (productId) => {
-    if (!confirm("Are you sure you want to deactivate this product?")) return;
+    if (!confirm("Are you sure you want to deactivate (BAN) this product?")) return;
     const token = getAccessToken();
     try {
       const res = await fetch(`${API_URL}/api/admin/products/${productId}`, {
@@ -143,6 +140,29 @@ export default function AdminPage() {
       }
     } catch {
       toast.error("Error deactivating product");
+    }
+  };
+
+  // ✅ NEW FUNCTION: REACTIVATE PRODUCT
+  const reactivateProduct = async (productId) => {
+    if (!confirm("Are you sure you want to reactivate (UNBAN) this product?")) return;
+    const token = getAccessToken();
+    try {
+      // Assuming you create this endpoint in your backend: router.put("/products/:id/activate", ...)
+      const res = await fetch(`${API_URL}/api/admin/products/${productId}/activate`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        toast.success("Product reactivated");
+        fetchData();
+      } else {
+        // Fallback if backend API endpoint missing
+        toast.error("Failed to reactivate. Check server routes.");
+      }
+    } catch {
+      toast.error("Error reactivating product");
     }
   };
 
@@ -309,11 +329,97 @@ export default function AdminPage() {
                                   e.stopPropagation();
                                   navigate(`/seller/${user.id}`);
                                 }}
-                                className="px-4 py-2 text-sm font-bold uppercase bg-[var(--mint)] border-2 border-black
-             hover:shadow-[2px_2px_0px_var(--black)] transition-all"
+                                className="px-4 py-2 text-sm font-bold uppercase bg-[var(--mint)] border-2 border-black hover:shadow-[2px_2px_0px_var(--black)] transition-all"
                               >
                                 View
                               </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "products" && (
+                <div className="bg-white border-3 border-black shadow-[6px_6px_0px_var(--black)] overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-[var(--pink-100)] border-b-3 border-black">
+                        <tr>
+                          <th className="px-6 py-4 text-left font-black uppercase">Product</th>
+                          <th className="px-6 py-4 text-left font-black uppercase">Creator</th>
+                          <th className="px-6 py-4 text-left font-black uppercase">Price</th>
+                          <th className="px-6 py-4 text-left font-black uppercase">Featured</th>
+                          <th className="px-6 py-4 text-left font-black uppercase">Status</th>
+                          <th className="px-6 py-4 text-left font-black uppercase">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {products.length === 0 && (
+                          <tr>
+                            <td colSpan="6" className="px-6 py-8 text-center font-bold text-gray-500">
+                              No products found.
+                            </td>
+                          </tr>
+                        )}
+                        {products.map((product) => (
+                          <tr key={product.id} className="border-b-2 border-gray-200 hover:bg-white">
+                            <td className="px-6 py-4">
+                              <p className="font-bold truncate max-w-[200px]">{product.name}</p>
+                              <p className="text-xs text-gray-600 truncate max-w-[200px]">{product.description}</p>
+                            </td>
+                            <td className="px-6 py-4 text-gray-600">
+                              {product.profiles?.name || 'Unknown'}
+                              <div className="text-xs text-gray-400">{product.profiles?.email}</div>
+                            </td>
+                            <td className="px-6 py-4 font-black text-[var(--pink-600)]">
+                              {product.currency === 'INR' ? '₹' : '$'}{product.price}
+                            </td>
+                            <td className="px-6 py-4">
+                              <button
+                                onClick={() => toggleFeatured(product.id, product.is_featured)}
+                                className={`px-3 py-1 font-bold text-xs border-2 border-black transition-all ${product.is_featured
+                                  ? "bg-[var(--yellow-400)] shadow-[2px_2px_0px_var(--black)]"
+                                  : "bg-white hover:bg-gray-100"
+                                  }`}
+                              >
+                                {product.is_featured ? "★ Featured" : "☆ Feature"}
+                              </button>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`px-2 py-1 text-xs font-bold uppercase border-2 border-black ${product.is_active ? "bg-green-200" : "bg-red-200"
+                                }`}>
+                                {product.is_active ? "Active" : "Inactive"}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => navigate(`/product/${product.id}`)}
+                                  className="px-3 py-1.5 font-bold text-xs uppercase bg-[var(--mint)] border-2 border-black hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
+                                >
+                                  View
+                                </button>
+                                
+                                {/* ✅ UPDATED: BAN / UNBAN BUTTONS */}
+                                {product.is_active ? (
+                                  <button
+                                    onClick={() => deactivateProduct(product.id)}
+                                    className="px-3 py-1.5 font-bold text-xs uppercase bg-red-100 text-red-600 border-2 border-black hover:bg-red-200 hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
+                                  >
+                                    Ban
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => reactivateProduct(product.id)}
+                                    className="px-3 py-1.5 font-bold text-xs uppercase bg-green-100 text-green-700 border-2 border-black hover:bg-green-200 hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
+                                  >
+                                    Unban
+                                  </button>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -339,8 +445,8 @@ export default function AdminPage() {
                       <button
                         onClick={() => setContactFilter("all")}
                         className={`px-4 py-1.5 text-sm font-black uppercase transition-all ${contactFilter === "all"
-                            ? "bg-black text-white"
-                            : "bg-transparent text-gray-500 hover:bg-gray-100"
+                          ? "bg-black text-white"
+                          : "bg-transparent text-gray-500 hover:bg-gray-100"
                           }`}
                       >
                         All
@@ -348,8 +454,8 @@ export default function AdminPage() {
                       <button
                         onClick={() => setContactFilter("pending")}
                         className={`px-4 py-1.5 text-sm font-black uppercase transition-all ${contactFilter === "pending"
-                            ? "bg-[var(--yellow-400)] text-black border-2 border-black translate-y-[-2px] shadow-[2px_2px_0px_var(--black)]"
-                            : "bg-transparent text-gray-500 hover:bg-[var(--yellow-100)]"
+                          ? "bg-[var(--yellow-400)] text-black border-2 border-black translate-y-[-2px] shadow-[2px_2px_0px_var(--black)]"
+                          : "bg-transparent text-gray-500 hover:bg-[var(--yellow-100)]"
                           }`}
                       >
                         Pending
@@ -357,8 +463,8 @@ export default function AdminPage() {
                       <button
                         onClick={() => setContactFilter("replied")}
                         className={`px-4 py-1.5 text-sm font-black uppercase transition-all ${contactFilter === "replied"
-                            ? "bg-green-400 text-black border-2 border-black translate-y-[-2px] shadow-[2px_2px_0px_var(--black)]"
-                            : "bg-transparent text-gray-500 hover:bg-green-100"
+                          ? "bg-green-400 text-black border-2 border-black translate-y-[-2px] shadow-[2px_2px_0px_var(--black)]"
+                          : "bg-transparent text-gray-500 hover:bg-green-100"
                           }`}
                       >
                         Replied
