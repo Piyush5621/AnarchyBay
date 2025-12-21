@@ -457,7 +457,7 @@ function PricingSection({ navigate, isAuthenticated }) {
               ))}
             </ul>
             <button
-              onClick={() => navigate(isAuthenticated ? "/create-product" : "/signup")}
+              onClick={() => navigate(isAuthenticated ? "/comingsoon" : "/signup")}
               className="w-full py-4 font-black uppercase bg-white text-[var(--pink-600)] border-3 border-black shadow-[4px_4px_0px_var(--black)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_var(--black)] transition-all"
             >
               Go Pro
