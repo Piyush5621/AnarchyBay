@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/use-auth";
 import NavBar from "./NavBar";
@@ -9,7 +9,7 @@ import { useRazorpay } from "react-razorpay";
 const COMMENT_CHAR_LIMIT = 500;
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
-// --- ICONS (Kept same as before) ---
+// --- ICONS ---
 const Icons = {
   Check: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>,
   Star: ({ filled }) => (
@@ -20,7 +20,7 @@ const Icons = {
   Share: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" /></svg>,
   Heart: ({ filled }) => <svg className={`w-5 h-5 ${filled ? "fill-red-500 text-red-500" : "text-black"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>,
   Cart: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>,
-  Play: () => <svg className="w-12 h-12 fill-white" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>,
+  Play: () => <svg className="w-12 h-12 fill-white" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>,
   Edit: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>,
   Back: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
 };
@@ -46,15 +46,14 @@ function renderMarkdown(text) {
 export default function ProductPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
-  // ✅ FIX 1: Destructure loading from useAuth to prevent premature fetches
   const { isAuthenticated, user, loading: authLoading } = useAuth();
-  
+
   // State
   const [hasPurchased, setHasPurchased] = useState(false);
   const [purchaseData, setPurchaseData] = useState(null);
   const [product, setProduct] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
-  const [dataLoading, setDataLoading] = useState(true); // Renamed from loading to differentiate from authLoading
+  const [dataLoading, setDataLoading] = useState(true);
   const [buying, setBuying] = useState(false);
   const [inWishlist, setInWishlist] = useState(false);
   const [reviews, setReviews] = useState([]);
@@ -66,11 +65,13 @@ export default function ProductPage() {
   const [newReview, setNewReview] = useState({ rating: 5, comment: "" });
   const [showDetailedPreview, setShowDetailedPreview] = useState(false);
 
-  const { Razorpay } = useRazorpay();
+  const { Razorpay, isLoading: isRazorpayLoading } = useRazorpay();
+  
+  // ✅ FIX: Use ref to prevent double opening
+  const paymentInstance = useRef(null);
 
   // --- LOGIC: Fetch Data & Check Status ---
   useEffect(() => {
-    // ✅ FIX 2: Wait for auth to finish loading before deciding what to fetch
     if (authLoading) return;
 
     const fetchAllData = async () => {
@@ -78,11 +79,11 @@ export default function ProductPage() {
         // 1. Fetch Public Product Data
         const res = await fetch(`${API_URL}/api/products/${productId}`);
         const data = await res.json();
-        
+
         if (!res.ok) throw new Error("Product not found");
-        
+
         setProduct(data.product || data);
-        
+
         // Fetch Variants
         const variantsRes = await fetch(`${API_URL}/api/products/${productId}/variants`);
         const variantsData = await variantsRes.json();
@@ -95,11 +96,11 @@ export default function ProductPage() {
         const reviewsData = await reviewsRes.json();
         setReviews(reviewsData.reviews || []);
         setReviewStats(reviewsData.stats || { avg: 0, count: 0, distribution: {} });
-        
+
         // 2. Fetch Protected Data (Only if logged in)
         if (isAuthenticated) {
           const token = getAccessToken();
-          
+
           // Check Purchase
           try {
             const purchaseRes = await fetch(`${API_URL}/api/purchases/check/${productId}`, {
@@ -127,21 +128,40 @@ export default function ProductPage() {
     };
 
     fetchAllData();
-  }, [productId, isAuthenticated, authLoading, user?.id]); // ✅ FIX 3: Correct dependencies
+  }, [productId, isAuthenticated, authLoading, user?.id]);
 
   // --- HANDLERS ---
   const handleBuyNow = async () => {
-    if (!isAuthenticated) { 
-        // Store current URL to redirect back after login
-        localStorage.setItem("redirectAfterLogin", window.location.pathname);
-        navigate("/login"); 
-        return; 
+    // ✅ SECURITY CHECK: Block if window is already active
+    if (paymentInstance.current) {
+        console.log("Payment window already active.");
+        return;
     }
-    if (hasPurchased) { navigate(`/download/${purchaseData.id}`); return; }
+
+    if (!isAuthenticated) {
+      localStorage.setItem("redirectAfterLogin", window.location.pathname);
+      navigate("/login");
+      return;
+    }
+
+    if (hasPurchased) {
+      navigate(`/download/${purchaseData.id}`);
+      return;
+    }
+
+    if (isRazorpayLoading || !Razorpay) {
+      console.error("Razorpay SDK not loaded yet.");
+      toast.error("Payment system is loading, please try again in a second.");
+      return;
+    }
 
     setBuying(true);
+
     try {
+      console.log("Initiating Checkout...");
       const token = getAccessToken();
+
+      // Create Order on Backend
       const res = await fetch(`${API_URL}/api/purchases/checkout/razorpay`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -149,17 +169,39 @@ export default function ProductPage() {
       });
 
       const orderData = await res.json();
+      console.log("Backend Order Response:", orderData);
+
       if (!res.ok) throw new Error(orderData.error || "Failed to create order");
 
+      // Verify Key ID exists
+      const keyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
+      if (!keyId) {
+        throw new Error("Razorpay Key ID is missing in frontend env variables");
+      }
+
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        key: keyId,
         amount: orderData.amount,
         currency: orderData.currency,
         name: "Anarchy Bay",
         description: `Purchase of ${product.name}`,
         image: "/favicon_io/android-chrome-512x512.png",
         order_id: orderData.orderId,
+        
+        // ✅ CRITICAL: Reset state if user closes popup manually
+        modal: {
+            ondismiss: function() {
+                console.log("Payment window closed by user");
+                setBuying(false);
+                paymentInstance.current = null;
+            }
+        },
+
         handler: async (response) => {
+          // Reset ref on success processing
+          paymentInstance.current = null;
+          
+          console.log("Payment Success:", response);
           try {
             const verifyRes = await fetch(`${API_URL}/api/purchases/verify/razorpay`, {
               method: "POST",
@@ -170,15 +212,18 @@ export default function ProductPage() {
                 razorpay_signature: response.razorpay_signature,
               }),
             });
+
             if (verifyRes.ok) {
               const verifyData = await verifyRes.json();
               toast.success("Payment successful!");
               navigate(`/checkout/success?purchase_id=${verifyData.purchase.id}`);
             } else {
+              const errorData = await verifyRes.json();
+              console.error("Verification failed:", errorData);
               toast.error("Payment verification failed");
             }
           } catch (err) {
-            console.error(err);
+            console.error("Verification Error:", err);
             toast.error("Error verifying payment");
           }
         },
@@ -186,13 +231,28 @@ export default function ProductPage() {
         theme: { color: "#000000" },
       };
 
+      console.log("Opening Razorpay...");
       const rzp = new Razorpay(options);
+
+      // ✅ Store instance to prevent duplicates
+      paymentInstance.current = rzp;
+
+      rzp.on('payment.failed', function (response) {
+        console.error("Payment UI Failed:", response.error);
+        toast.error(response.error.description || "Payment failed");
+        setBuying(false);
+        paymentInstance.current = null;
+      });
+
       rzp.open();
+
     } catch (err) {
+      console.error("Handle Buy Now Error:", err);
       toast.error(err.message || "Payment failed");
-    } finally {
       setBuying(false);
+      paymentInstance.current = null;
     }
+    // Note: No finally block here because state is handled in callbacks
   };
 
   const handleAddToWishlist = async () => {
@@ -252,10 +312,10 @@ export default function ProductPage() {
         body: JSON.stringify(newReview),
       });
       if (!res.ok) { const data = await res.json(); throw new Error(data.error || "Failed"); }
-      
+
       toast.success("Review submitted!");
       setNewReview({ rating: 5, comment: "" });
-      
+
       // Refresh reviews
       const reviewsRes = await fetch(`${API_URL}/api/reviews/product/${productId}`);
       const reviewsData = await reviewsRes.json();
@@ -329,7 +389,7 @@ export default function ProductPage() {
   const shortDesc = product.short_description || product.description?.slice(0, 200) || "";
   const longDesc = product.long_description || product.description || "";
   const coverImage = product.thumbnail_url || product.image_url?.[0];
-  const pageColor = product.page_color || "#f3f4f6"; 
+  const pageColor = product.page_color || "#f3f4f6";
   const accentColor = product.accent_color || "#ffde59";
   const buttonColor = product.button_color || "#ec4899";
   const textColor = product.text_color || "#000000";
@@ -340,20 +400,20 @@ export default function ProductPage() {
     <div className="min-h-screen relative" style={{ backgroundColor: pageColor }}>
       {/* Texture Overlay */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.05] bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:20px_20px]" />
-      
+
       <NavBar />
 
       <main className="pt-24 pb-20 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          
+
           {/* Top Actions: Back & Edit */}
           <div className="flex justify-between items-center mb-6">
-             <button 
-                onClick={() => navigate(-1)}
-                className="group flex items-center gap-2 font-black text-sm uppercase bg-white border-[3px] border-black px-4 py-2 shadow-[4px_4px_0px_black] hover:-translate-y-1 hover:shadow-[6px_6px_0px_black] transition-all"
-             >
-                <Icons.Back /> Back
-             </button>
+            <button
+              onClick={() => navigate(-1)}
+              className="group flex items-center gap-2 font-black text-sm uppercase bg-white border-[3px] border-black px-4 py-2 shadow-[4px_4px_0px_black] hover:-translate-y-1 hover:shadow-[6px_6px_0px_black] transition-all"
+            >
+              <Icons.Back /> Back
+            </button>
 
             {isCreator && (
               <button
@@ -366,16 +426,16 @@ export default function ProductPage() {
           </div>
 
           <div className="grid lg:grid-cols-12 gap-8 items-start">
-            
+
             {/* ================= LEFT COLUMN (Images & Details) ================= */}
             <div className="lg:col-span-8 space-y-8">
-              
+
               {/* --- HERO IMAGE CARD --- */}
               <div className="bg-white border-[3px] border-black shadow-[8px_8px_0px_black] overflow-hidden relative group">
                 {coverImage ? (
                   <div className="relative bg-gray-100 aspect-video flex items-center justify-center overflow-hidden">
                     <img src={coverImage} alt={product.name} className="w-full h-full object-contain" />
-                    
+
                     {/* Tags Overlay */}
                     <div className="absolute top-4 left-4 flex gap-2">
                       {product.category?.map((cat, i) => (
@@ -391,7 +451,7 @@ export default function ProductPage() {
                         onClick={() => setShowDetailedPreview(true)}
                         className="absolute bottom-4 right-4 px-6 py-2 bg-black text-white font-bold uppercase border-2 border-white shadow-[4px_4px_0px_black] hover:scale-105 transition-transform flex items-center gap-2"
                       >
-                          <Icons.Play /> Preview Media
+                        <Icons.Play /> Preview Media
                       </button>
                     )}
                   </div>
@@ -406,216 +466,216 @@ export default function ProductPage() {
               <div className="bg-white border-[3px] border-black shadow-[8px_8px_0px_black] p-8">
                 {/* Header: Title & Rating */}
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6 border-b-[3px] border-black pb-6">
-                    <div>
-                        <h1 className="font-black text-4xl md:text-5xl uppercase leading-none mb-2" style={{ color: textColor }}>
-                            {product.name}
-                        </h1>
-                        <Link to={`/seller/${product.creator?.id}`} className="inline-flex items-center gap-2 hover:underline decoration-2">
-                            <span className="text-gray-500 font-bold text-sm uppercase">By</span>
-                            <span className="font-bold text-lg">{creatorName}</span>
-                            {product.creator?.profile_image_url && <img src={product.creator.profile_image_url} className="w-6 h-6 rounded-full border border-black" />}
-                        </Link>
+                  <div>
+                    <h1 className="font-black text-4xl md:text-5xl uppercase leading-none mb-2" style={{ color: textColor }}>
+                      {product.name}
+                    </h1>
+                    <Link to={`/seller/${product.creator?.id}`} className="inline-flex items-center gap-2 hover:underline decoration-2">
+                      <span className="text-gray-500 font-bold text-sm uppercase">By</span>
+                      <span className="font-bold text-lg">{creatorName}</span>
+                      {product.creator?.profile_image_url && <img src={product.creator.profile_image_url} className="w-6 h-6 rounded-full border border-black" />}
+                    </Link>
+                  </div>
+
+                  {/* Rating Badge */}
+                  <div className="flex flex-col items-end">
+                    <div className="flex items-center gap-1 bg-black text-white px-3 py-1 font-bold text-lg border-2 border-black shadow-[3px_3px_0px_gray]">
+                      <span className="text-[var(--yellow-400)]">★</span> {reviewStats.avg?.toFixed(1) || "0.0"}
                     </div>
-                    
-                    {/* Rating Badge */}
-                    <div className="flex flex-col items-end">
-                        <div className="flex items-center gap-1 bg-black text-white px-3 py-1 font-bold text-lg border-2 border-black shadow-[3px_3px_0px_gray]">
-                            <span className="text-[var(--yellow-400)]">★</span> {reviewStats.avg?.toFixed(1) || "0.0"}
-                        </div>
-                        <span className="text-xs font-bold text-gray-500 mt-1 uppercase">{reviewStats.count} Reviews</span>
-                    </div>
+                    <span className="text-xs font-bold text-gray-500 mt-1 uppercase">{reviewStats.count} Reviews</span>
+                  </div>
                 </div>
 
                 <p className="text-xl font-medium leading-relaxed mb-8 text-gray-700">
-                    {shortDesc}
+                  {shortDesc}
                 </p>
 
                 {/* Features Grid */}
                 <div className="grid sm:grid-cols-2 gap-4 mb-8">
-                    <div className="bg-gray-50 border-2 border-black p-4">
-                        <h3 className="font-black uppercase text-sm mb-2 text-gray-400">What's Inside</h3>
-                        <div className="flex items-center gap-2 font-bold">
-                             <div className="bg-[var(--mint)] p-1 border border-black"><Icons.Check /></div>
-                             <span>{product.files?.length || 0} Files Included</span>
-                        </div>
+                  <div className="bg-gray-50 border-2 border-black p-4">
+                    <h3 className="font-black uppercase text-sm mb-2 text-gray-400">What's Inside</h3>
+                    <div className="flex items-center gap-2 font-bold">
+                      <div className="bg-[var(--mint)] p-1 border border-black"><Icons.Check /></div>
+                      <span>{product.files?.length || 0} Files Included</span>
                     </div>
-                    <div className="bg-gray-50 border-2 border-black p-4">
-                          <h3 className="font-black uppercase text-sm mb-2 text-gray-400">File Type</h3>
-                          <div className="flex items-center gap-2 font-bold">
-                             <div className="bg-[var(--yellow-400)] p-1 border border-black"><span className="text-xs">ZIP</span></div>
-                             <span>{product.files?.[0]?.content_type?.split("/")[1]?.toUpperCase() || "Digital Download"}</span>
-                        </div>
+                  </div>
+                  <div className="bg-gray-50 border-2 border-black p-4">
+                    <h3 className="font-black uppercase text-sm mb-2 text-gray-400">File Type</h3>
+                    <div className="flex items-center gap-2 font-bold">
+                      <div className="bg-[var(--yellow-400)] p-1 border border-black"><span className="text-xs">ZIP</span></div>
+                      <span>{product.files?.[0]?.content_type?.split("/")[1]?.toUpperCase() || "Digital Download"}</span>
                     </div>
+                  </div>
                 </div>
 
                 {/* Tabs / Accordion for Description */}
                 {longDesc && (
-                    <div className="mt-8 pt-8 border-t-[3px] border-black">
-                        <h2 className="font-black text-2xl uppercase mb-4 bg-black text-white inline-block px-2">Description</h2>
-                        <div className="prose prose-lg max-w-none text-gray-800" dangerouslySetInnerHTML={{ __html: renderMarkdown(longDesc) }} />
-                    </div>
+                  <div className="mt-8 pt-8 border-t-[3px] border-black">
+                    <h2 className="font-black text-2xl uppercase mb-4 bg-black text-white inline-block px-2">Description</h2>
+                    <div className="prose prose-lg max-w-none text-gray-800" dangerouslySetInnerHTML={{ __html: renderMarkdown(longDesc) }} />
+                  </div>
                 )}
               </div>
 
               {/* --- REVIEWS SECTION --- */}
               <div className="bg-white border-[3px] border-black shadow-[8px_8px_0px_black] p-8">
-                  <div className="flex items-center justify-between mb-8">
-                    <h2 className="font-black text-3xl uppercase">Customer Reviews</h2>
-                    <div className="hidden md:block h-1 flex-1 bg-black mx-4"></div>
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="font-black text-3xl uppercase">Customer Reviews</h2>
+                  <div className="hidden md:block h-1 flex-1 bg-black mx-4"></div>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-8 mb-10">
+                  {/* Score Card */}
+                  <div className="bg-[var(--pink-50)] border-[3px] border-black p-6 text-center flex flex-col justify-center shadow-[4px_4px_0px_black]">
+                    <div className="text-6xl font-black mb-2">{reviewStats.avg.toFixed(1)}</div>
+                    <div className="flex justify-center gap-1 mb-2">
+                      {[1, 2, 3, 4, 5].map(s => <Icons.Star key={s} filled={s <= Math.round(reviewStats.avg)} />)}
+                    </div>
+                    <div className="text-xs font-bold uppercase tracking-widest text-gray-500">Based on {reviewStats.count} ratings</div>
                   </div>
 
-                  <div className="grid md:grid-cols-3 gap-8 mb-10">
-                    {/* Score Card */}
-                    <div className="bg-[var(--pink-50)] border-[3px] border-black p-6 text-center flex flex-col justify-center shadow-[4px_4px_0px_black]">
-                        <div className="text-6xl font-black mb-2">{reviewStats.avg.toFixed(1)}</div>
-                        <div className="flex justify-center gap-1 mb-2">
-                             {[1,2,3,4,5].map(s => <Icons.Star key={s} filled={s <= Math.round(reviewStats.avg)} />)}
+                  {/* Distribution Bars */}
+                  <div className="md:col-span-2 flex flex-col justify-center space-y-3">
+                    {[5, 4, 3, 2, 1].map(stars => (
+                      <div key={stars} className="flex items-center gap-3">
+                        <span className="font-bold text-sm w-8">{stars} ★</span>
+                        <div className="flex-1 h-3 bg-gray-200 border border-black rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-black"
+                            style={{ width: `${reviewStats.count ? ((reviewStats.distribution[stars] || 0) / reviewStats.count) * 100 : 0}%` }}
+                          />
                         </div>
-                        <div className="text-xs font-bold uppercase tracking-widest text-gray-500">Based on {reviewStats.count} ratings</div>
-                    </div>
-
-                    {/* Distribution Bars */}
-                    <div className="md:col-span-2 flex flex-col justify-center space-y-3">
-                          {[5,4,3,2,1].map(stars => (
-                             <div key={stars} className="flex items-center gap-3">
-                                 <span className="font-bold text-sm w-8">{stars} ★</span>
-                                 <div className="flex-1 h-3 bg-gray-200 border border-black rounded-full overflow-hidden">
-                                     <div 
-                                         className="h-full bg-black" 
-                                         style={{ width: `${reviewStats.count ? ((reviewStats.distribution[stars] || 0) / reviewStats.count) * 100 : 0}%` }} 
-                                      />
-                                 </div>
-                                 <span className="text-xs font-bold w-6 text-right">{reviewStats.distribution[stars] || 0}</span>
-                             </div>
-                          ))}
-                    </div>
+                        <span className="text-xs font-bold w-6 text-right">{reviewStats.distribution[stars] || 0}</span>
+                      </div>
+                    ))}
                   </div>
-                
-                  {/* Review Form */}
-                  {!userReview && isAuthenticated && !isCreator && (
-                      <form onSubmit={handleSubmitReview} className="mb-10 bg-gray-50 border-2 border-dashed border-black p-6">
-                         <h3 className="font-bold text-lg uppercase mb-4">Leave a Review</h3>
-                         <div className="flex gap-2 mb-4">
-                             {[1,2,3,4,5].map(star => (
-                                 <button key={star} type="button" onClick={() => setNewReview(prev => ({...prev, rating: star}))} className="hover:scale-110 transition-transform">
-                                      <Icons.Star filled={star <= newReview.rating} />
-                                 </button>
-                             ))}
-                         </div>
-                         <textarea 
-                             value={newReview.comment}
-                             onChange={e => setNewReview(r => ({ ...r, comment: e.target.value }))}
-                             className="w-full p-4 border-2 border-black font-medium focus:outline-none focus:shadow-[4px_4px_0px_var(--pink-400)] transition-shadow mb-4"
-                             rows={3}
-                             placeholder="How was the product?"
-                         />
-                         <button type="submit" disabled={submittingReview} className="px-6 py-2 bg-black text-white font-bold uppercase border-2 border-black hover:bg-[var(--pink-500)] transition-colors disabled:opacity-50">
-                             {submittingReview ? "Submitting..." : "Post Review"}
-                         </button>
-                      </form>
-                  )}
+                </div>
 
-                  {/* Reviews List */}
-                  <div className="space-y-6">
-                     {reviews.map(review => (
-                         <div key={review.id} className="border-2 border-black p-5 bg-white shadow-[4px_4px_0px_gray]">
-                             <div className="flex justify-between items-start mb-3">
-                                 <div className="flex items-center gap-3">
-                                     <div className="w-10 h-10 bg-[var(--yellow-200)] border-2 border-black rounded-full flex items-center justify-center font-bold">
-                                         {(review.user?.name || "U").charAt(0)}
-                                     </div>
-                                     <div>
-                                         <p className="font-bold text-sm">{review.user?.name || "Anonymous"}</p>
-                                         <div className="flex text-xs">
-                                              {[...Array(5)].map((_, i) => <Icons.Star key={i} filled={i < review.rating} />)}
-                                         </div>
-                                     </div>
-                                 </div>
-                                 <span className="text-xs text-gray-400 font-bold">{new Date(review.created_at).toLocaleDateString()}</span>
-                             </div>
-                             <p className="text-gray-700 leading-relaxed">{review.comment}</p>
-                         </div>
-                     ))}
-                     {reviews.length === 0 && <p className="text-center italic text-gray-500">No reviews yet. Be the first!</p>}
-                  </div>
+                {/* Review Form */}
+                {!userReview && isAuthenticated && !isCreator && (
+                  <form onSubmit={handleSubmitReview} className="mb-10 bg-gray-50 border-2 border-dashed border-black p-6">
+                    <h3 className="font-bold text-lg uppercase mb-4">Leave a Review</h3>
+                    <div className="flex gap-2 mb-4">
+                      {[1, 2, 3, 4, 5].map(star => (
+                        <button key={star} type="button" onClick={() => setNewReview(prev => ({ ...prev, rating: star }))} className="hover:scale-110 transition-transform">
+                          <Icons.Star filled={star <= newReview.rating} />
+                        </button>
+                      ))}
+                    </div>
+                    <textarea
+                      value={newReview.comment}
+                      onChange={e => setNewReview(r => ({ ...r, comment: e.target.value }))}
+                      className="w-full p-4 border-2 border-black font-medium focus:outline-none focus:shadow-[4px_4px_0px_var(--pink-400)] transition-shadow mb-4"
+                      rows={3}
+                      placeholder="How was the product?"
+                    />
+                    <button type="submit" disabled={submittingReview} className="px-6 py-2 bg-black text-white font-bold uppercase border-2 border-black hover:bg-[var(--pink-500)] transition-colors disabled:opacity-50">
+                      {submittingReview ? "Submitting..." : "Post Review"}
+                    </button>
+                  </form>
+                )}
+
+                {/* Reviews List */}
+                <div className="space-y-6">
+                  {reviews.map(review => (
+                    <div key={review.id} className="border-2 border-black p-5 bg-white shadow-[4px_4px_0px_gray]">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-[var(--yellow-200)] border-2 border-black rounded-full flex items-center justify-center font-bold">
+                            {(review.user?.name || "U").charAt(0)}
+                          </div>
+                          <div>
+                            <p className="font-bold text-sm">{review.user?.name || "Anonymous"}</p>
+                            <div className="flex text-xs">
+                              {[...Array(5)].map((_, i) => <Icons.Star key={i} filled={i < review.rating} />)}
+                            </div>
+                          </div>
+                        </div>
+                        <span className="text-xs text-gray-400 font-bold">{new Date(review.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <p className="text-gray-700 leading-relaxed">{review.comment}</p>
+                    </div>
+                  ))}
+                  {reviews.length === 0 && <p className="text-center italic text-gray-500">No reviews yet. Be the first!</p>}
+                </div>
               </div>
             </div>
 
             {/* ================= RIGHT COLUMN (Sticky Buy Box) ================= */}
             <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-24 h-fit">
-               
-               <div className="bg-white border-[3px] border-black shadow-[8px_8px_0px_black] p-6 relative overflow-hidden" style={{ borderTop: `8px solid ${accentColor}` }}>
-                  
-                  {/* Price Section */}
-                  <div className="mb-6 text-center border-b-2 border-dashed border-gray-300 pb-6">
-                      <p className="text-xs font-black uppercase text-gray-400 tracking-widest mb-1">Standard License</p>
-                      <div className="text-6xl font-black text-black">
-                         {currencySymbol}{product.price}
-                      </div>
-                  </div>
 
-                  {/* CTAs */}
-                  <div className="space-y-3">
-                      <button 
-                        onClick={handleBuyNow}
-                        disabled={buying}
-                        className="w-full py-4 bg-[var(--pink-500)] text-white font-black uppercase text-xl border-[3px] border-black shadow-[4px_4px_0px_black] hover:-translate-y-1 hover:shadow-[6px_6px_0px_black] active:translate-y-0 active:shadow-[2px_2px_0px_black] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                          {buying ? "Processing..." : hasPurchased ? "Download Now" : "Buy Now"}
-                      </button>
-                      
-                      <button 
-                        onClick={handleAddToCart}
-                        style={{ backgroundColor: !inCart ? buttonColor : undefined }}
-                        className={`w-full py-3 font-bold uppercase border-[3px] border-black transition-all flex items-center justify-center gap-2 ${inCart ? 'bg-[var(--mint)] shadow-none translate-y-[2px]' : 'text-white shadow-[4px_4px_0px_black] hover:-translate-y-1 hover:shadow-[6px_6px_0px_black]'}`}
-                      >
-                          <Icons.Cart /> {inCart ? "In Cart" : "Add to Cart"}
-                      </button>
-                  </div>
+              <div className="bg-white border-[3px] border-black shadow-[8px_8px_0px_black] p-6 relative overflow-hidden" style={{ borderTop: `8px solid ${accentColor}` }}>
 
-                  {/* Secondary Actions */}
-                  <div className="grid grid-cols-2 gap-3 mt-4">
-                      <button 
-                        onClick={handleAddToWishlist}
-                        className={`py-2 font-bold uppercase text-xs border-2 border-black flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors ${inWishlist ? 'bg-[var(--pink-100)] text-[var(--pink-600)]' : 'bg-white'}`}
-                      >
-                          <Icons.Heart filled={inWishlist} /> {inWishlist ? 'Saved' : 'Wishlist'}
-                      </button>
-                      <div className="relative">
-                          <button 
-                            onClick={() => setShowShareMenu(!showShareMenu)}
-                            className="w-full h-full py-2 font-bold uppercase text-xs border-2 border-black bg-white hover:bg-[var(--yellow-100)] transition-colors flex items-center justify-center gap-2"
+                {/* Price Section */}
+                <div className="mb-6 text-center border-b-2 border-dashed border-gray-300 pb-6">
+                  <p className="text-xs font-black uppercase text-gray-400 tracking-widest mb-1">Standard License</p>
+                  <div className="text-6xl font-black text-black">
+                    {currencySymbol}{product.price}
+                  </div>
+                </div>
+
+                {/* CTAs */}
+                <div className="space-y-3">
+                  <button
+                    onClick={handleBuyNow}
+                    disabled={buying}
+                    className="w-full py-4 bg-[var(--pink-500)] text-white font-black uppercase text-xl border-[3px] border-black shadow-[4px_4px_0px_black] hover:-translate-y-1 hover:shadow-[6px_6px_0px_black] active:translate-y-0 active:shadow-[2px_2px_0px_black] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {buying ? "Processing..." : hasPurchased ? "Download Now" : "Buy Now"}
+                  </button>
+
+                  <button
+                    onClick={handleAddToCart}
+                    style={{ backgroundColor: !inCart ? buttonColor : undefined }}
+                    className={`w-full py-3 font-bold uppercase border-[3px] border-black transition-all flex items-center justify-center gap-2 ${inCart ? 'bg-[var(--mint)] shadow-none translate-y-[2px]' : 'text-white shadow-[4px_4px_0px_black] hover:-translate-y-1 hover:shadow-[6px_6px_0px_black]'}`}
+                  >
+                    <Icons.Cart /> {inCart ? "In Cart" : "Add to Cart"}
+                  </button>
+                </div>
+
+                {/* Secondary Actions */}
+                <div className="grid grid-cols-2 gap-3 mt-4">
+                  <button
+                    onClick={handleAddToWishlist}
+                    className={`py-2 font-bold uppercase text-xs border-2 border-black flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors ${inWishlist ? 'bg-[var(--pink-100)] text-[var(--pink-600)]' : 'bg-white'}`}
+                  >
+                    <Icons.Heart filled={inWishlist} /> {inWishlist ? 'Saved' : 'Wishlist'}
+                  </button>
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowShareMenu(!showShareMenu)}
+                      className="w-full h-full py-2 font-bold uppercase text-xs border-2 border-black bg-white hover:bg-[var(--yellow-100)] transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Icons.Share /> Share
+                    </button>
+
+                    {/* Share Menu Dropdown */}
+                    {showShareMenu && (
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-white border-3 border-black shadow-[4px_4px_0px_black] z-50 flex flex-col">
+                        {['twitter', 'facebook', 'linkedin', 'copy'].map(p => (
+                          <button
+                            key={p}
+                            onClick={() => handleShare(p)}
+                            className="px-4 py-2 text-left text-xs font-bold uppercase hover:bg-[var(--yellow-400)] border-b border-gray-100 last:border-0"
                           >
-                            <Icons.Share /> Share
+                            {p}
                           </button>
-                          
-                          {/* Share Menu Dropdown */}
-                          {showShareMenu && (
-                            <div className="absolute top-full left-0 right-0 mt-2 bg-white border-3 border-black shadow-[4px_4px_0px_black] z-50 flex flex-col">
-                                {['twitter', 'facebook', 'linkedin', 'copy'].map(p => (
-                                    <button 
-                                        key={p} 
-                                        onClick={() => handleShare(p)} 
-                                        className="px-4 py-2 text-left text-xs font-bold uppercase hover:bg-[var(--yellow-400)] border-b border-gray-100 last:border-0"
-                                    >
-                                        {p}
-                                    </button>
-                                ))}
-                            </div>
-                          )}
+                        ))}
                       </div>
+                    )}
                   </div>
+                </div>
 
-                  {/* Security Badge */}
-                  <div className="mt-6 flex flex-col items-center gap-2 text-center">
-                        <div className="flex gap-2 opacity-50 grayscale">
-                          <div className="h-6 w-8 bg-gray-300 rounded"></div>
-                          <div className="h-6 w-8 bg-gray-300 rounded"></div>
-                          <div className="h-6 w-8 bg-gray-300 rounded"></div>
-                       </div>
-                       <p className="text-[10px] font-bold uppercase text-gray-400">Secure Payment via Razorpay</p>
+                {/* Security Badge */}
+                <div className="mt-6 flex flex-col items-center gap-2 text-center">
+                  <div className="flex gap-2 opacity-50 grayscale">
+                    <div className="h-6 w-8 bg-gray-300 rounded"></div>
+                    <div className="h-6 w-8 bg-gray-300 rounded"></div>
+                    <div className="h-6 w-8 bg-gray-300 rounded"></div>
                   </div>
-               </div>
+                  <p className="text-[10px] font-bold uppercase text-gray-400">Secure Payment via Razorpay</p>
+                </div>
+              </div>
             </div>
 
           </div>
@@ -632,7 +692,7 @@ export default function ProductPage() {
                 ×
               </button>
             </div>
-            
+
             <div className="p-8 space-y-12">
               {product.preview_videos?.length > 0 && (
                 <div>
