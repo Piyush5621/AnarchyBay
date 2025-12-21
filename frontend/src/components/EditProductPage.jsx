@@ -154,331 +154,327 @@ export default function EditProductPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white">
-        <NavBar />
-        <main className="pt-24 flex items-center justify-center">
-          <svg className="w-12 h-12 animate-spin text-slate-400" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
-        </main>
+      <div className="min-h-screen bg-[#f3f4f6] flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-black border-t-[var(--pink-500)] rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#f3f4f6] bg-[radial-gradient(#000000_1px,transparent_1px)] [background-size:20px_20px]">
       <NavBar />
 
-      <main className="pt-24 pb-20">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6">
-          <div className="mb-8">
-            <button 
-              onClick={() => navigate(`/product/${productId}`)}
-              className="flex items-center gap-2 mb-4 px-4 py-2 text-sm font-bold uppercase border-3 border-black bg-white hover:bg-[var(--yellow-400)] shadow-[3px_3px_0px_var(--black)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[5px_5px_0px_var(--black)] transition-all"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-              </svg>
-              Back to product
-            </button>
-            <h1 className="font-display text-4xl mb-2">Edit Product</h1>
-            <p className="text-gray-500">Update your product details</p>
+      <main className="pt-28 pb-20">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          
+          <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+                <button 
+                onClick={() => navigate(`/product/${productId}`)}
+                className="flex items-center gap-2 mb-4 font-bold uppercase text-xs tracking-wider hover:text-[var(--pink-600)] transition-colors group"
+                >
+                <div className="bg-white border-2 border-black p-1 group-hover:-translate-x-1 transition-transform">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </div>
+                Back to Product
+                </button>
+                <h1 className="font-black text-5xl uppercase italic tracking-tighter">
+                    Edit <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--pink-500)] to-[var(--yellow-500)]">Product</span>
+                </h1>
+                <p className="font-bold text-gray-500 mt-2">Refine your product details and design.</p>
+            </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="bg-white border-3 border-black shadow-[6px_6px_0px_var(--black)] p-6">
-              <h2 className="font-bold text-xl uppercase mb-4">Product Details</h2>
+          <form onSubmit={handleSubmit} className="grid lg:grid-cols-12 gap-8 items-start">
+            
+            {/* === LEFT COLUMN: ESSENTIALS === */}
+            <div className="lg:col-span-7 space-y-8">
+                
+                {/* CARD 1: BASIC INFO */}
+                <div className="bg-white border-3 border-black shadow-[8px_8px_0px_black] p-6 relative">
+                    <div className="absolute -top-4 -left-4 w-10 h-10 bg-black text-white border-3 border-black flex items-center justify-center font-black text-xl shadow-[2px_2px_0px_rgba(255,255,255,0.5)]">1</div>
+                    <h2 className="font-black text-xl uppercase mb-6 ml-4 border-b-3 border-[var(--yellow-400)] inline-block">The Basics</h2>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-bold uppercase text-gray-700 mb-1">Product Name *</label>
-                  <input
-                    type="text"
-                    value={form.name}
-                    onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                    className="w-full px-4 py-3 border-3 border-black focus:outline-none focus:shadow-[3px_3px_0px_var(--black)]"
-                    required
-                  />
-                </div>
+                    <div className="space-y-5">
+                        <div>
+                            <label className="block text-sm font-black uppercase mb-2">Product Name</label>
+                            <input
+                                type="text"
+                                value={form.name}
+                                onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+                                className="w-full px-4 py-3 bg-gray-50 border-3 border-black font-bold focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_var(--yellow-400)] transition-all"
+                                required
+                            />
+                        </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-sm font-bold uppercase text-gray-700">Short Description</label>
-                    <span className={`text-xs font-bold ${form.short_description.length > SHORT_DESC_LIMIT * 0.9 ? "text-pink-500" : "text-gray-400"}`}>
-                      {form.short_description.length}/{SHORT_DESC_LIMIT}
-                    </span>
-                  </div>
-                  <textarea
-                    value={form.short_description}
-                    onChange={e => setForm(p => ({ ...p, short_description: e.target.value.slice(0, SHORT_DESC_LIMIT) }))}
-                    rows={2}
-                    className="w-full px-4 py-3 border-3 border-black focus:outline-none focus:shadow-[3px_3px_0px_var(--black)] resize-none"
-                  />
-                </div>
+                        <div>
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="block text-sm font-black uppercase">Short Description</label>
+                                <span className={`text-xs font-bold border-2 border-black px-2 ${form.short_description.length > SHORT_DESC_LIMIT * 0.9 ? "bg-red-200" : "bg-white"}`}>
+                                {form.short_description.length}/{SHORT_DESC_LIMIT}
+                                </span>
+                            </div>
+                            <textarea
+                                value={form.short_description}
+                                onChange={e => setForm(p => ({ ...p, short_description: e.target.value.slice(0, SHORT_DESC_LIMIT) }))}
+                                rows={3}
+                                className="w-full px-4 py-3 bg-gray-50 border-3 border-black font-medium focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_var(--yellow-400)] transition-all resize-none"
+                            />
+                        </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-sm font-bold uppercase text-gray-700">Long Description</label>
-                    <span className={`text-xs font-bold ${form.long_description.length > LONG_DESC_LIMIT * 0.9 ? "text-pink-500" : "text-gray-400"}`}>
-                      {form.long_description.length}/{LONG_DESC_LIMIT}
-                    </span>
-                  </div>
-                  <textarea
-                    value={form.long_description}
-                    onChange={e => setForm(p => ({ ...p, long_description: e.target.value.slice(0, LONG_DESC_LIMIT) }))}
-                    rows={8}
-                    className="w-full px-4 py-3 border-3 border-black focus:outline-none focus:shadow-[3px_3px_0px_var(--black)] resize-none text-sm"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-bold uppercase text-gray-700 mb-1">Price *</label>
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-600">
-                        {form.currency === "INR" ? "₹" : "$"}
-                      </span>
-                      <input
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={form.price}
-                        onChange={e => setForm(p => ({ ...p, price: e.target.value }))}
-                        className="w-full pl-10 pr-4 py-3 font-bold text-lg border-3 border-black focus:outline-none focus:shadow-[3px_3px_0px_var(--black)]"
-                        required
-                      />
+                        <div>
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="block text-sm font-black uppercase">Long Description</label>
+                                <span className={`text-xs font-bold border-2 border-black px-2 ${form.long_description.length > LONG_DESC_LIMIT * 0.9 ? "bg-red-200" : "bg-white"}`}>
+                                {form.long_description.length}/{LONG_DESC_LIMIT}
+                                </span>
+                            </div>
+                            <textarea
+                                value={form.long_description}
+                                onChange={e => setForm(p => ({ ...p, long_description: e.target.value.slice(0, LONG_DESC_LIMIT) }))}
+                                rows={8}
+                                className="w-full px-4 py-3 bg-gray-50 border-3 border-black font-mono text-sm focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_var(--yellow-400)] transition-all resize-none"
+                            />
+                        </div>
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold uppercase text-gray-700 mb-1">Currency</label>
-                    <select
-                      value={form.currency}
-                      onChange={e => setForm(p => ({ ...p, currency: e.target.value }))}
-                      className="w-full px-4 py-3 border-3 border-black focus:outline-none cursor-pointer font-bold"
+                </div>
+
+                {/* CARD 2: PRICING & CATEGORY */}
+                <div className="bg-white border-3 border-black shadow-[8px_8px_0px_black] p-6 relative">
+                    <div className="absolute -top-4 -left-4 w-10 h-10 bg-[var(--pink-500)] text-white border-3 border-black flex items-center justify-center font-black text-xl shadow-[2px_2px_0px_black]">2</div>
+                    <h2 className="font-black text-xl uppercase mb-6 ml-4 border-b-3 border-[var(--pink-400)] inline-block">Categorization</h2>
+
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-black uppercase mb-2">Price</label>
+                                <div className="relative">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-lg text-gray-400">
+                                    {form.currency === "INR" ? "₹" : "$"}
+                                </span>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="1"
+                                    value={form.price}
+                                    onChange={e => setForm(p => ({ ...p, price: e.target.value }))}
+                                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border-3 border-black font-black text-xl focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_var(--pink-400)] transition-all"
+                                    required
+                                />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-black uppercase mb-2">Currency</label>
+                                <select
+                                value={form.currency}
+                                onChange={e => setForm(p => ({ ...p, currency: e.target.value }))}
+                                className="w-full px-4 py-3 bg-gray-50 border-3 border-black font-bold focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_var(--pink-400)] cursor-pointer"
+                                >
+                                <option value="INR">INR (₹)</option>
+                                <option value="USD">USD ($)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-black uppercase mb-3">Categories</label>
+                            <div className="flex flex-wrap gap-2">
+                                {CATEGORIES.map(cat => (
+                                <button
+                                    key={cat}
+                                    type="button"
+                                    onClick={() => toggleCategory(cat)}
+                                    className={`px-3 py-1.5 text-xs font-black uppercase border-2 border-black transition-all ${
+                                    form.categories.includes(cat)
+                                        ? "bg-black text-white shadow-[2px_2px_0px_var(--pink-500)] translate-x-[1px] translate-y-[1px]"
+                                        : "bg-white hover:bg-[var(--pink-100)] shadow-[2px_2px_0px_black] hover:-translate-y-0.5"
+                                    }`}
+                                >
+                                    {cat}
+                                </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-black uppercase mb-2">Tags</label>
+                            <input
+                                type="text"
+                                value={form.tags}
+                                onChange={e => setForm(p => ({ ...p, tags: e.target.value }))}
+                                className="w-full px-4 py-3 bg-gray-50 border-3 border-black font-medium focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_var(--pink-400)] transition-all"
+                                placeholder="comma, separated, tags"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* === RIGHT COLUMN: DESIGN & ACTIONS === */}
+            <div className="lg:col-span-5 space-y-8 sticky top-24">
+                
+                {/* CARD 3: LOOK & FEEL */}
+                <div className="bg-white border-3 border-black shadow-[8px_8px_0px_black] p-6 relative">
+                    <div className="absolute -top-4 -left-4 w-10 h-10 bg-[var(--mint)] text-black border-3 border-black flex items-center justify-center font-black text-xl shadow-[2px_2px_0px_black]">3</div>
+                    <h2 className="font-black text-xl uppercase mb-6 ml-4 border-b-3 border-[var(--mint)] inline-block">Design Studio</h2>
+
+                    <div className="space-y-6">
+                        {/* Page Background */}
+                        <div>
+                            <label className="block text-xs font-black uppercase mb-3 flex justify-between">
+                                <span>Background Color</span>
+                                <span className="font-mono bg-gray-100 px-1">{form.page_color}</span>
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                                {PAGE_COLORS.map(color => (
+                                <button
+                                    key={color.value}
+                                    type="button"
+                                    onClick={() => setForm(p => ({ ...p, page_color: color.value }))}
+                                    className={`w-8 h-8 border-2 transition-all rounded-full ${
+                                    form.page_color === color.value 
+                                        ? "border-black ring-2 ring-offset-2 ring-black scale-110" 
+                                        : "border-gray-300 hover:scale-110"
+                                    }`}
+                                    style={{ backgroundColor: color.value }}
+                                    title={color.name}
+                                />
+                                ))}
+                                <div className="relative group">
+                                    <div className="w-8 h-8 border-2 border-dashed border-black flex items-center justify-center bg-white cursor-pointer rounded-full">+</div>
+                                    <input
+                                        type="color"
+                                        value={form.page_color}
+                                        onChange={e => setForm(p => ({ ...p, page_color: e.target.value }))}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Accent Color */}
+                        <div>
+                            <label className="block text-xs font-black uppercase mb-3 flex justify-between">
+                                <span>Accent Color</span>
+                                <span className="font-mono bg-gray-100 px-1">{form.accent_color}</span>
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                                {ACCENT_COLORS.map(color => (
+                                <button
+                                    key={color.value}
+                                    type="button"
+                                    onClick={() => setForm(p => ({ ...p, accent_color: color.value }))}
+                                    className={`w-8 h-8 border-2 transition-all rounded-full ${
+                                    form.accent_color === color.value 
+                                        ? "border-black ring-2 ring-offset-2 ring-black scale-110" 
+                                        : "border-gray-300 hover:scale-110"
+                                    }`}
+                                    style={{ backgroundColor: color.value }}
+                                    title={color.name}
+                                />
+                                ))}
+                                <div className="relative group">
+                                    <div className="w-8 h-8 border-2 border-dashed border-black flex items-center justify-center bg-white cursor-pointer rounded-full">+</div>
+                                    <input
+                                        type="color"
+                                        value={form.accent_color}
+                                        onChange={e => setForm(p => ({ ...p, accent_color: e.target.value }))}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Button Color */}
+                        <div>
+                            <label className="block text-xs font-black uppercase mb-3 flex justify-between">
+                                <span>Button Color</span>
+                                <span className="font-mono bg-gray-100 px-1">{form.button_color}</span>
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                                {ACCENT_COLORS.map(color => (
+                                <button
+                                    key={color.value}
+                                    type="button"
+                                    onClick={() => setForm(p => ({ ...p, button_color: color.value }))}
+                                    className={`w-8 h-8 border-2 transition-all rounded-full ${
+                                    form.button_color === color.value 
+                                        ? "border-black ring-2 ring-offset-2 ring-black scale-110" 
+                                        : "border-gray-300 hover:scale-110"
+                                    }`}
+                                    style={{ backgroundColor: color.value }}
+                                    title={color.name}
+                                />
+                                ))}
+                                <div className="relative group">
+                                    <div className="w-8 h-8 border-2 border-dashed border-black flex items-center justify-center bg-white cursor-pointer rounded-full">+</div>
+                                    <input
+                                        type="color"
+                                        value={form.button_color}
+                                        onChange={e => setForm(p => ({ ...p, button_color: e.target.value }))}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Text Color */}
+                        <div>
+                            <label className="block text-xs font-black uppercase mb-3">Text Color</label>
+                            <div className="flex items-center gap-2 border-3 border-black p-2 bg-gray-50">
+                                <input 
+                                    type="color" 
+                                    value={form.text_color}
+                                    onChange={e => setForm(p => ({ ...p, text_color: e.target.value }))}
+                                    className="w-10 h-10 border-2 border-black p-0 cursor-pointer"
+                                />
+                                <span className="font-mono font-bold">{form.text_color}</span>
+                            </div>
+                        </div>
+
+                        {/* LIVE PREVIEW BOX */}
+                        <div className="mt-4 p-4 border-3 border-black shadow-[4px_4px_0px_rgba(0,0,0,0.1)] transition-colors duration-300" style={{ backgroundColor: form.page_color }}>
+                            <p className="text-xs font-black uppercase mb-4 opacity-50" style={{ color: form.text_color }}>Live Preview</p>
+                            
+                            <h3 className="text-2xl font-black mb-2" style={{ color: form.text_color }}>{form.name || "Product Name"}</h3>
+                            <p className="text-sm font-medium mb-4 line-clamp-2" style={{ color: form.text_color, opacity: 0.8 }}>
+                                {form.short_description || "Short description text..."}
+                            </p>
+
+                            <div className="p-4 border-3 border-black mb-3" style={{ backgroundColor: form.accent_color }}>
+                                <span className="font-black text-xl">
+                                    {form.currency === 'INR' ? '₹' : '$'}{form.price || '0'}
+                                </span>
+                            </div>
+
+                            <button className="w-full py-3 font-black uppercase text-white border-3 border-black shadow-[2px_2px_0px_rgba(0,0,0,0.2)]" style={{ backgroundColor: form.button_color }}>
+                                Buy Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* ACTION BUTTONS */}
+                <div className="flex flex-col gap-3">
+                    <button
+                        type="submit"
+                        disabled={saving}
+                        className="w-full py-4 font-black uppercase text-xl bg-black text-white border-3 border-black shadow-[4px_4px_0px_var(--pink-500)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[8px_8px_0px_var(--pink-500)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <option value="INR">INR (₹)</option>
-                      <option value="USD">USD ($)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold uppercase text-gray-700 mb-2">Categories *</label>
-                  <div className="flex flex-wrap gap-2">
-                    {CATEGORIES.map(cat => (
-                      <button
-                        key={cat}
+                        {saving ? "Saving..." : "Save Changes"}
+                    </button>
+                    <button
                         type="button"
-                        onClick={() => toggleCategory(cat)}
-                        className={`px-4 py-2 text-sm font-bold uppercase border-3 border-black transition-all ${
-                          form.categories.includes(cat)
-                            ? "bg-[var(--yellow-400)] shadow-[3px_3px_0px_var(--black)]"
-                            : "bg-white hover:bg-[var(--mint)]"
-                        }`}
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
+                        onClick={() => navigate(`/product/${productId}`)}
+                        className="w-full py-3 font-bold uppercase text-sm bg-white text-black border-3 border-black hover:bg-gray-100 transition-all"
+                    >
+                        Cancel
+                    </button>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-bold uppercase text-gray-700 mb-1">Tags (comma separated)</label>
-                  <input
-                    type="text"
-                    value={form.tags}
-                    onChange={e => setForm(p => ({ ...p, tags: e.target.value }))}
-                    className="w-full px-4 py-3 border-3 border-black focus:outline-none focus:shadow-[3px_3px_0px_var(--black)]"
-                  />
-                </div>
-              </div>
             </div>
 
-            <div className="bg-white border-3 border-black shadow-[6px_6px_0px_var(--black)] p-6">
-              <h2 className="font-bold text-xl uppercase mb-4">Page Customization</h2>
-              <p className="text-sm text-gray-500 mb-6">Customize the colors of your product page elements</p>
-
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-bold uppercase text-gray-700 mb-3">Page Background Color</label>
-                  <div className="flex flex-wrap gap-3">
-                    {PAGE_COLORS.map(color => (
-                      <button
-                        key={color.value}
-                        type="button"
-                        onClick={() => setForm(p => ({ ...p, page_color: color.value }))}
-                        className={`w-10 h-10 border-3 transition-all ${
-                          form.page_color === color.value 
-                            ? "border-[var(--pink-500)] shadow-[3px_3px_0px_var(--black)] scale-110" 
-                            : "border-black hover:scale-105"
-                        }`}
-                        style={{ backgroundColor: color.value }}
-                        title={color.name}
-                      />
-                    ))}
-                    <div className="relative">
-                      <input
-                        type="color"
-                        value={form.page_color}
-                        onChange={e => setForm(p => ({ ...p, page_color: e.target.value }))}
-                        className="absolute inset-0 w-10 h-10 opacity-0 cursor-pointer"
-                      />
-                      <div 
-                        className="w-10 h-10 border-3 border-dashed border-gray-400 flex items-center justify-center hover:border-black transition-colors"
-                        style={{ backgroundColor: !PAGE_COLORS.find(c => c.value === form.page_color) ? form.page_color : 'transparent' }}
-                      >
-                        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold uppercase text-gray-700 mb-3">Accent Color (Price Section)</label>
-                  <div className="flex flex-wrap gap-3">
-                    {ACCENT_COLORS.map(color => (
-                      <button
-                        key={color.value}
-                        type="button"
-                        onClick={() => setForm(p => ({ ...p, accent_color: color.value }))}
-                        className={`w-10 h-10 border-3 transition-all ${
-                          form.accent_color === color.value 
-                            ? "border-[var(--pink-500)] shadow-[3px_3px_0px_var(--black)] scale-110" 
-                            : "border-black hover:scale-105"
-                        }`}
-                        style={{ backgroundColor: color.value }}
-                        title={color.name}
-                      />
-                    ))}
-                    <div className="relative">
-                      <input
-                        type="color"
-                        value={form.accent_color}
-                        onChange={e => setForm(p => ({ ...p, accent_color: e.target.value }))}
-                        className="absolute inset-0 w-10 h-10 opacity-0 cursor-pointer"
-                      />
-                      <div 
-                        className="w-10 h-10 border-3 border-dashed border-gray-400 flex items-center justify-center hover:border-black transition-colors"
-                        style={{ backgroundColor: !ACCENT_COLORS.find(c => c.value === form.accent_color) ? form.accent_color : 'transparent' }}
-                      >
-                        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold uppercase text-gray-700 mb-3">Button Color</label>
-                  <div className="flex flex-wrap gap-3">
-                    {ACCENT_COLORS.map(color => (
-                      <button
-                        key={color.value}
-                        type="button"
-                        onClick={() => setForm(p => ({ ...p, button_color: color.value }))}
-                        className={`w-10 h-10 border-3 transition-all ${
-                          form.button_color === color.value 
-                            ? "border-[var(--pink-500)] shadow-[3px_3px_0px_var(--black)] scale-110" 
-                            : "border-black hover:scale-105"
-                        }`}
-                        style={{ backgroundColor: color.value }}
-                        title={color.name}
-                      />
-                    ))}
-                    <div className="relative">
-                      <input
-                        type="color"
-                        value={form.button_color}
-                        onChange={e => setForm(p => ({ ...p, button_color: e.target.value }))}
-                        className="absolute inset-0 w-10 h-10 opacity-0 cursor-pointer"
-                      />
-                      <div 
-                        className="w-10 h-10 border-3 border-dashed border-gray-400 flex items-center justify-center hover:border-black transition-colors"
-                        style={{ backgroundColor: !ACCENT_COLORS.find(c => c.value === form.button_color) ? form.button_color : 'transparent' }}
-                      >
-                        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold uppercase text-gray-700 mb-3">Text Color</label>
-                  <div className="flex flex-wrap gap-3">
-                    {[
-                      { name: "Black", value: "#000000" },
-                      { name: "Dark Gray", value: "#374151" },
-                      { name: "Gray", value: "#6b7280" },
-                      { name: "White", value: "#ffffff" },
-                      { name: "Cream", value: "#fef3c7" },
-                    ].map(color => (
-                      <button
-                        key={color.value}
-                        type="button"
-                        onClick={() => setForm(p => ({ ...p, text_color: color.value }))}
-                        className={`w-10 h-10 border-3 transition-all ${
-                          form.text_color === color.value 
-                            ? "border-[var(--pink-500)] shadow-[3px_3px_0px_var(--black)] scale-110" 
-                            : "border-black hover:scale-105"
-                        }`}
-                        style={{ backgroundColor: color.value }}
-                        title={color.name}
-                      />
-                    ))}
-                    <div className="relative">
-                      <input
-                        type="color"
-                        value={form.text_color}
-                        onChange={e => setForm(p => ({ ...p, text_color: e.target.value }))}
-                        className="absolute inset-0 w-10 h-10 opacity-0 cursor-pointer"
-                      />
-                      <div 
-                        className="w-10 h-10 border-3 border-dashed border-gray-400 flex items-center justify-center hover:border-black transition-colors"
-                        style={{ backgroundColor: form.text_color !== "#000000" && form.text_color !== "#374151" && form.text_color !== "#6b7280" && form.text_color !== "#ffffff" && form.text_color !== "#fef3c7" ? form.text_color : 'transparent' }}
-                      >
-                        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6 p-6 border-3 border-black" style={{ backgroundColor: form.page_color }}>
-                <p className="text-lg font-bold mb-2" style={{ color: form.text_color }}>Preview</p>
-                <p className="text-sm mb-4" style={{ color: form.text_color, opacity: 0.8 }}>This is how your text will look</p>
-                <div className="inline-block px-6 py-3 border-3 border-black font-bold" style={{ backgroundColor: form.accent_color }}>
-                  Price Section
-                </div>
-                <div className="inline-block ml-3 px-6 py-3 border-3 border-black font-bold text-white" style={{ backgroundColor: form.button_color }}>
-                  Buy Button
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={() => navigate(`/product/${productId}`)}
-                className="flex-1 py-4 font-bold uppercase border-3 border-black bg-white hover:bg-gray-100 shadow-[4px_4px_0px_var(--black)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_var(--black)] transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={saving}
-                className="flex-1 py-4 font-bold uppercase border-3 border-black bg-[var(--yellow-400)] shadow-[4px_4px_0px_var(--black)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_var(--black)] transition-all disabled:opacity-50"
-              >
-                {saving ? "Saving..." : "Save Changes"}
-              </button>
-            </div>
           </form>
         </div>
       </main>

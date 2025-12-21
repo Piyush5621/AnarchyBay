@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import NavBar from "./NavBar";
 
 export default function SellerPage() {
@@ -31,25 +31,18 @@ export default function SellerPage() {
     return 0;
   });
 
+  // --- CUSTOM SKELETON LOADER ---
   if (loading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-gray-50">
         <NavBar />
-        <main className="pt-24 pb-20">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6">
-            <div className="animate-pulse">
-              <div className="flex items-center gap-6 mb-12">
-                <div className="w-24 h-24 rounded-full bg-gray-200" />
-                <div className="space-y-3">
-                  <div className="h-8 w-48 bg-gray-200" />
-                  <div className="h-4 w-32 bg-gray-200" />
-                </div>
-              </div>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="bg-white border-3 border-black h-80" />
-                ))}
-              </div>
+        <main className="pt-24 pb-20 max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="animate-pulse space-y-8">
+            <div className="h-64 bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,0.1)] rounded-xl" />
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-white border-4 border-black h-96 shadow-[4px_4px_0px_black]" />
+              ))}
             </div>
           </div>
         </main>
@@ -57,23 +50,22 @@ export default function SellerPage() {
     );
   }
 
+  // --- NOT FOUND STATE ---
   if (!seller) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-[#f0f0f0] flex flex-col">
         <NavBar />
-        <main className="pt-24 pb-20">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
-            <div className="bg-white border-3 border-black shadow-[6px_6px_0px_var(--black)] p-12">
-              <div className="text-6xl mb-4">👤</div>
-              <h1 className="text-3xl font-black mb-4">Seller Not Found</h1>
-              <p className="text-gray-600 mb-8">This seller profile doesn't exist.</p>
-              <button
-                onClick={() => navigate("/browse")}
-                className="px-8 py-4 font-black uppercase bg-[var(--pink-500)] text-white border-3 border-black shadow-[4px_4px_0px_var(--black)]"
-              >
-                Browse Products
-              </button>
-            </div>
+        <main className="flex-1 flex items-center justify-center p-4">
+          <div className="bg-white border-4 border-black shadow-[8px_8px_0px_black] p-12 text-center max-w-lg w-full">
+            <div className="text-7xl mb-6 grayscale opacity-50">👻</div>
+            <h1 className="text-4xl font-black mb-2 uppercase italic">Ghost Town</h1>
+            <p className="text-gray-600 font-bold mb-8">We couldn't find the seller you are looking for.</p>
+            <button
+              onClick={() => navigate("/browse")}
+              className="w-full py-4 font-black uppercase bg-[var(--pink-500)] text-white border-3 border-black shadow-[4px_4px_0px_black] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_black] transition-all"
+            >
+              Back to Browse
+            </button>
           </div>
         </main>
       </div>
@@ -83,80 +75,110 @@ export default function SellerPage() {
   const displayName = seller.display_name || seller.name || "Anonymous";
 
   return (
-    <div className="min-h-screen bg-white">
+    // Background pattern for texture
+    <div className="min-h-screen bg-[#fafafa] bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]">
       <NavBar />
 
-      <main className="pt-24 pb-20">
+      <main className="pt-28 pb-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          
+          {/* BACK BUTTON */}
           <button
             onClick={() => navigate(-1)}
-            className="mb-8 flex items-center gap-2 font-bold hover:text-[var(--pink-600)] transition-colors"
+            className="mb-8 group flex items-center gap-2 font-black text-sm uppercase tracking-wider hover:text-[var(--pink-600)] transition-colors w-fit"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
+            <div className="bg-white border-2 border-black p-1 group-hover:-translate-x-1 transition-transform">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+            </div>
             Back
           </button>
 
-          <div className="bg-white border-3 border-black shadow-[6px_6px_0px_var(--black)] p-8 mb-12">
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-              <div className="w-24 h-24 rounded-full bg-[var(--pink-200)] border-4 border-black flex items-center justify-center text-4xl font-black overflow-hidden">
-                {seller.profile_image_url ? (
-                  <img src={seller.profile_image_url} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  displayName.charAt(0).toUpperCase()
-                )}
-              </div>
-              <div className="flex-1">
-                <h1 className="text-3xl md:text-4xl font-black">{displayName}</h1>
-                {seller.username && (
-                  <p className="text-gray-500 font-medium">@{seller.username}</p>
-                )}
-                {seller.bio && (
-                  <p className="text-gray-600 mt-2 max-w-2xl">{seller.bio}</p>
-                )}
-                <div className="flex items-center gap-4 mt-4 text-sm text-gray-500">
-                  <span className="flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                    </svg>
-                    {products.length} product{products.length !== 1 ? 's' : ''}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    Joined {new Date(seller.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                  </span>
+          {/* SELLER PROFILE HEADER */}
+          <div className="relative bg-white border-4 border-black shadow-[8px_8px_0px_black] mb-16 overflow-hidden group">
+            
+            {/* Decorative Banner Header */}
+            <div className="h-32 bg-[var(--pink-500)] border-b-4 border-black bg-[image:radial-gradient(circle,rgba(0,0,0,0.2)_1px,transparent_1px)] bg-[size:10px_10px]"></div>
+            
+            <div className="px-8 pb-8 flex flex-col md:flex-row items-center md:items-end gap-6 relative -mt-12 md:-mt-16">
+                {/* Avatar */}
+                <div className="relative z-10">
+                    <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-white border-4 border-black flex items-center justify-center text-5xl font-black overflow-hidden shadow-lg">
+                        {seller.profile_image_url ? (
+                        <img src={seller.profile_image_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                        <span className="text-gray-800">{displayName.charAt(0).toUpperCase()}</span>
+                        )}
+                    </div>
+                    {/* Status Dot */}
+                    <div className="absolute bottom-2 right-2 w-6 h-6 bg-green-500 border-2 border-black rounded-full" title="Active Seller"></div>
                 </div>
-              </div>
+
+                {/* Info */}
+                <div className="flex-1 text-center md:text-left mb-2 w-full">
+                    <h1 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none mb-1">
+                        {displayName}
+                    </h1>
+                    {seller.username && (
+                        <p className="text-white bg-black w-fit p-1 border-0 rounded-2xl font-bold text-lg mb-3">@{seller.username}</p>
+                    )}
+                    
+                    {seller.bio && (
+                        <div className="bg-gray-50 border-2 border-dashed border-gray-300 p-3 mb-4 inline-block md:block rounded-lg max-w-2xl">
+                             <p className="text-gray-700 font-medium leading-relaxed">"{seller.bio}"</p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Stats Badges */}
+                <div className="flex flex-wrap justify-center gap-3 mb-2">
+                    <div className="px-4 py-2 bg-[var(--yellow-100)] border-3 border-black font-bold uppercase text-xs shadow-[2px_2px_0px_black]">
+                        📦 {products.length} Products
+                    </div>
+                    <div className="px-4 py-2 bg-[var(--mint)] border-3 border-black font-bold uppercase text-xs shadow-[2px_2px_0px_black]">
+                        📅 Joined {new Date(seller.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
+                    </div>
+                </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-black">Products by {displayName}</h2>
-            <select
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value)}
-              className="px-4 py-2 font-bold bg-white border-3 border-black shadow-[3px_3px_0px_var(--black)] cursor-pointer"
-            >
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="price-low">Price: Low to High</option>
-              <option value="price-high">Price: High to Low</option>
-              <option value="rating">Highest Rated</option>
-              <option value="popularity">Most Popular</option>
-            </select>
+          {/* FILTERS & TITLE */}
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8 border-b-4 border-black pb-4">
+            <h2 className="text-3xl font-black uppercase tracking-tight flex items-center gap-2">
+                 Marketplace <span className="bg-black text-white px-2 text-lg rounded-sm transform -rotate-2 inline-block">Items</span>
+            </h2>
+            
+            <div className="relative group">
+                <div className="absolute inset-0 bg-black translate-x-1 translate-y-1 rounded-none"></div>
+                <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value)}
+                className="relative z-10 w-full md:w-64 px-4 py-3 font-bold bg-white border-3 border-black cursor-pointer focus:outline-none focus:ring-4 focus:ring-[var(--pink-200)] uppercase text-sm appearance-none"
+                style={{ backgroundImage: 'none' }} // Remove default arrow to add custom one if wanted, or keep default
+                >
+                <option value="newest">✨ Newest Arrivals</option>
+                <option value="oldest">🕰️ Oldest Items</option>
+                <option value="price-low">💰 Price: Low to High</option>
+                <option value="price-high">💎 Price: High to Low</option>
+                <option value="rating">⭐ Highest Rated</option>
+                <option value="popularity">🔥 Most Popular</option>
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20 pointer-events-none">
+                    <svg className="w-5 h-5 border-2 border-black bg-[var(--yellow-400)] rounded-full p-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
+                </div>
+            </div>
           </div>
 
+          {/* PRODUCTS GRID */}
           {sortedProducts.length === 0 ? (
-            <div className="bg-white border-3 border-black shadow-[4px_4px_0px_var(--black)] p-12 text-center">
-              <div className="text-6xl mb-4">📦</div>
-              <h3 className="font-black text-2xl mb-2">No products yet</h3>
-              <p className="text-gray-600">This seller hasn't listed any products.</p>
+            <div className="bg-white border-4 border-black border-dashed p-16 text-center">
+              <div className="text-6xl mb-4 opacity-50">📭</div>
+              <h3 className="font-black text-2xl uppercase mb-2">Shelf Empty</h3>
+              <p className="text-gray-500 font-bold">This seller hasn't listed any products yet.</p>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {sortedProducts.map((product) => (
                 <ProductCard key={product.id} product={product} navigate={navigate} />
               ))}
@@ -168,47 +190,65 @@ export default function SellerPage() {
   );
 }
 
+// --- ENHANCED PRODUCT CARD ---
 function ProductCard({ product, navigate }) {
   return (
     <div
       onClick={() => navigate(`/product/${product.id}`)}
-      className="bg-white border-3 border-black shadow-[4px_4px_0px_var(--black)] cursor-pointer hover:translate-x-[-4px] hover:translate-y-[-4px] hover:shadow-[8px_8px_0px_var(--black)] transition-all"
+      className="group relative bg-white border-4 border-black shadow-[6px_6px_0px_black] hover:shadow-[10px_10px_0px_black] hover:translate-x-[-4px] hover:translate-y-[-4px] transition-all duration-200 cursor-pointer flex flex-col h-full"
     >
-      <div className="aspect-[4/3] bg-[var(--pink-50)] border-b-3 border-black flex items-center justify-center overflow-hidden relative group">
+      {/* Image Container */}
+      <div className="aspect-[4/3] bg-gray-100 border-b-4 border-black relative overflow-hidden">
+        {/* Overlay on hover */}
+        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity z-10" />
+        
         {product.thumbnail_url ? (
           <img 
             src={product.thumbnail_url} 
             alt={product.name} 
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500 ease-in-out"
           />
         ) : (
-          <span className="text-6xl">📦</span>
+          <div className="w-full h-full flex items-center justify-center text-4xl bg-[var(--pink-50)]">📦</div>
+        )}
+
+        {/* Floating Category Tag */}
+        {product.category && product.category[0] && (
+            <div className="absolute top-3 left-3 z-20">
+                <span className="px-3 py-1 text-xs font-black uppercase bg-black text-white border-2 border-white shadow-sm">
+                    {product.category[0]}
+                </span>
+            </div>
         )}
       </div>
-      <div className="p-5">
-        <div className="flex flex-wrap gap-2 mb-3">
-          {product.category?.slice(0, 2).map((cat, j) => (
-            <span key={j} className="px-3 py-1 text-xs font-bold uppercase bg-[var(--mint)] border-2 border-black">
-              {cat}
-            </span>
-          ))}
-        </div>
-        <h3 className="font-black text-xl mb-2 line-clamp-1">{product.name}</h3>
-        <p className="text-sm text-gray-600 line-clamp-2 mb-4 h-10">{product.description}</p>
-        <div className="flex items-center justify-between pt-3 border-t-2 border-dashed border-gray-200">
+
+      {/* Card Body */}
+      <div className="p-5 flex flex-col flex-1">
+        <h3 className="font-black text-xl leading-tight mb-2 line-clamp-2 group-hover:text-[var(--pink-600)] transition-colors">
+            {product.name}
+        </h3>
+        
+        <p className="text-sm text-gray-600 font-medium line-clamp-2 mb-4 flex-1">
+            {product.description}
+        </p>
+
+        {/* Footer info */}
+        <div className="mt-auto pt-4 border-t-2 border-dashed border-gray-300 flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="font-black text-2xl text-[var(--pink-600)]">
+            {/* Price Tag Style */}
+            <span className="inline-block bg-[var(--yellow-400)] text-black border-2 border-black px-2 py-0.5 text-lg font-black transform -rotate-2 group-hover:rotate-0 transition-transform w-fit">
               {product.currency === 'INR' ? '₹' : '$'}{product.price}
             </span>
+            
             {product.rating_count > 0 && (
-              <div className="flex items-center gap-1 text-sm text-gray-500">
-                <svg className="w-4 h-4 fill-yellow-400" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                {product.rating_avg?.toFixed(1)} ({product.rating_count})
-              </div>
+                <div className="flex items-center gap-1 mt-1 text-xs font-bold text-gray-500">
+                    <span className="text-yellow-500 text-sm">★</span> {product.rating_avg?.toFixed(1)} ({product.rating_count})
+                </div>
             )}
           </div>
-          <button className="px-5 py-2 font-bold uppercase bg-[var(--pink-500)] text-white border-3 border-black shadow-[3px_3px_0px_var(--black)]">
-            View
+
+          <button className="w-10 h-10 flex items-center justify-center bg-black text-white rounded-full group-hover:bg-[var(--pink-500)] transition-colors">
+            <svg className="w-5 h-5 transform -rotate-45 group-hover:rotate-0 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
           </button>
         </div>
       </div>

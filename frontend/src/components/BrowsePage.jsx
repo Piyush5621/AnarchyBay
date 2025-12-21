@@ -3,8 +3,15 @@ import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import NavBar from "./NavBar";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination, Autoplay } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/pagination";
 
 const CATEGORIES = ["All", "Design", "Code", "Templates", "E-commerce", "Icons", "Photography", "Productivity"];
+
+// --- ICONS ---
+const SearchIcon = () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
+const FilterIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>;
+const FireIcon = () => <svg className="w-5 h-5 fill-[var(--pink-500)] text-[var(--pink-500)]" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.047 8.287 8.287 0 009 9.601a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 00.495-7.468 5.99 5.99 0 00-1.925 3.547 5.975 5.975 0 01-2.133-1.001A3.75 3.75 0 0012 18z" /></svg>;
 
 export default function BrowsePage() {
   const navigate = useNavigate();
@@ -22,13 +29,12 @@ export default function BrowsePage() {
   const [activeCategory, setActiveCategory] = useState(urlCategory);
   const [activeTag, setActiveTag] = useState(urlTag);
 
-  // Sync with URL params only on mount or when URL changes externally
+  // Sync with URL params
   const searchParamsKey = `${urlSearch}-${urlCategory}-${urlTag}`;
   useEffect(() => {
     setSearch(urlSearch);
     setActiveCategory(urlCategory);
     setActiveTag(urlTag);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParamsKey]);
 
   useEffect(() => {
@@ -72,182 +78,199 @@ export default function BrowsePage() {
       return 0;
     });
 
-  // Get popular tags from products
-  const popularTags = [...new Set(products.flatMap(p => p.tags || []))]
-    .slice(0, 12);
+  const popularTags = [...new Set(products.flatMap(p => p.tags || []))].slice(0, 12);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#f8f8f8] bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px]">
       <NavBar />
 
       <main className="pt-24 pb-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="mb-8 lg:mb-12">
-            <span className="inline-block px-4 py-2 bg-[var(--pink-200)] border-3 border-black font-bold text-sm uppercase mb-4">
-              Marketplace
-            </span>
-            <h1 className="text-3xl sm:text-4xl md:text-6xl font-black mb-4">
-              Discover <span className="text-[var(--pink-500)]">Digital Products</span>
-            </h1>
-            <p className="text-lg sm:text-xl text-gray-600 max-w-2xl">
-              Browse templates, code, designs, and more from creators around India.
-            </p>
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
+          
+          {/* --- HEADER HEADER --- */}
+          <div className="relative mb-12 bg-black text-white p-8 md:p-12 border-4 border-black shadow-[8px_8px_0px_var(--pink-500)] overflow-hidden">
+             {/* Abstract Shapes */}
+             <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--yellow-400)] rounded-full mix-blend-exclusion filter blur-3xl opacity-50 -translate-y-1/2 translate-x-1/4"></div>
+             
+             <div className="relative z-10 max-w-3xl">
+                <div className="inline-block px-4 py-1 bg-[var(--pink-500)] text-white font-black uppercase text-xs tracking-widest mb-4 border-2 border-white transform -rotate-2">
+                    Marketplace
+                </div>
+                <h1 className="text-4xl md:text-7xl font-black uppercase tracking-tighter leading-none mb-6">
+                    Discover <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--yellow-400)] to-[var(--pink-500)]">Digital</span> Assets
+                </h1>
+                <p className="text-lg md:text-xl text-gray-300 font-medium max-w-2xl leading-relaxed">
+                    Explore high-quality templates, code snippets, design assets, and more from India's best creators.
+                </p>
+             </div>
           </div>
 
-          {activeTag && (
-            <div className="mb-6 flex items-center gap-3">
-              <span className="text-sm font-bold uppercase text-gray-500">Filtering by tag:</span>
-              <span className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--pink-500)] text-white font-bold border-3 border-black">
-                #{activeTag}
-                <button onClick={clearTag} className="hover:text-yellow-300">×</button>
-              </span>
-            </div>
-          )}
-
-          {popularTags.length > 0 && !activeTag && (
-            <div className="mb-6">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-sm font-bold uppercase text-gray-500">Popular Tags:</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {popularTags.map(tag => (
-                  <button
-                    key={tag}
-                    onClick={(e) => handleTagClick(tag, e)}
-                    className="px-3 py-1.5 text-sm font-bold bg-white border-2 border-black hover:bg-[var(--pink-100)] hover:shadow-[2px_2px_0px_var(--black)] transition-all"
-                  >
-                    #{tag}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="lg:hidden mb-6">
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
-              {CATEGORIES.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  className={`flex-shrink-0 px-4 py-2 font-bold text-sm border-3 transition-all whitespace-nowrap ${
-                    activeCategory === cat
-                      ? "bg-[var(--pink-500)] text-white border-black shadow-[2px_2px_0px_var(--black)]"
-                      : "bg-white border-black hover:bg-[var(--pink-50)]"
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
-
+          {/* --- FEATURED CAROUSEL --- */}
           {featured.length > 0 && (
-            <div className="mb-8 lg:mb-12">
-              <h2 className="text-xl sm:text-2xl font-black mb-4 sm:mb-6">Featured Products</h2>
+            <div className="mb-16">
+              <div className="flex items-center gap-3 mb-6">
+                 <div className="p-2 bg-[var(--yellow-400)] border-3 border-black"><FireIcon /></div>
+                 <h2 className="text-2xl font-black uppercase tracking-tight">Featured Drops</h2>
+              </div>
+              
               <Swiper
                 modules={[Pagination, Autoplay]}
-                spaceBetween={16}
+                spaceBetween={24}
                 slidesPerView={1}
-                pagination={{ clickable: true }}
-                autoplay={{ delay: 5000, disableOnInteraction: false }}
+                autoplay={{ delay: 4000, disableOnInteraction: false }}
                 breakpoints={{
-                  640: { slidesPerView: 2, spaceBetween: 20 },
-                  1024: { slidesPerView: 3, spaceBetween: 24 },
+                  640: { slidesPerView: 2 },
+                  1024: { slidesPerView: 3 },
+                  1280: { slidesPerView: 4 },
                 }}
-                className="featured-swiper"
+                className="pb-12 px-2"
               >
                 {featured.map((product) => (
                   <SwiperSlide key={product.id}>
-                    <FeaturedCard product={product} navigate={navigate} />
+                    <ProductCard product={product} navigate={navigate} isFeatured={true} />
                   </SwiperSlide>
                 ))}
               </Swiper>
             </div>
           )}
 
-          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-            <aside className="hidden lg:block lg:w-64 flex-shrink-0">
-              <div className="bg-white border-3 border-black shadow-[4px_4px_0px_var(--black)] p-6 sticky top-24">
-                <h3 className="font-black text-lg uppercase mb-4">Categories</h3>
-                <div className="space-y-2">
+          <div className="flex flex-col lg:flex-row gap-8 items-start">
+            
+            {/* --- SIDEBAR FILTER (Sticky) --- */}
+            <aside className="hidden lg:block w-64 flex-shrink-0 sticky top-24">
+              <div className="bg-white border-3 border-black shadow-[6px_6px_0px_black]">
+                <div className="bg-[var(--pink-100)] p-4 border-b-3 border-black flex items-center gap-2">
+                    <FilterIcon />
+                    <h3 className="font-black uppercase text-lg">Categories</h3>
+                </div>
+                <div className="p-2">
                   {CATEGORIES.map(cat => (
                     <button
                       key={cat}
                       onClick={() => setActiveCategory(cat)}
-                      className={`w-full text-left px-4 py-3 font-bold transition-all border-3 ${
+                      className={`w-full text-left px-4 py-3 font-bold uppercase text-sm transition-all border-2 mb-2 last:mb-0 flex justify-between items-center group ${
                         activeCategory === cat
-                          ? "bg-[var(--pink-500)] text-white border-black shadow-[3px_3px_0px_var(--black)]"
-                          : "bg-white border-transparent hover:border-black hover:bg-[var(--pink-50)]"
+                          ? "bg-black text-white border-black"
+                          : "bg-white border-transparent hover:border-black hover:bg-gray-50"
                       }`}
                     >
                       {cat}
+                      {activeCategory === cat && <span className="text-[var(--yellow-400)]">●</span>}
                     </button>
                   ))}
                 </div>
               </div>
+
+              {/* Tag Cloud Sidebar */}
+              {popularTags.length > 0 && (
+                  <div className="mt-8">
+                      <h4 className="font-black uppercase text-sm mb-4 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-black"></span> Trending Tags
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                          {popularTags.map(tag => (
+                              <button 
+                                key={tag} 
+                                onClick={(e) => handleTagClick(tag, e)}
+                                className="px-2 py-1 text-xs font-bold border-2 border-black bg-white hover:bg-[var(--yellow-400)] transition-colors"
+                              >
+                                  #{tag}
+                              </button>
+                          ))}
+                      </div>
+                  </div>
+              )}
             </aside>
 
-            <div className="flex-1">
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
+            {/* --- MAIN CONTENT --- */}
+            <div className="flex-1 w-full">
+              
+              {/* Search & Sort Bar */}
+              <div className="bg-white border-3 border-black p-4 shadow-[6px_6px_0px_black] mb-8 flex flex-col md:flex-row gap-4">
                 <div className="flex-1 relative">
                   <input
                     type="text"
-                    placeholder="Search products or #tags..."
+                    placeholder="Search for products..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="w-full px-4 sm:px-5 py-3 sm:py-4 font-medium bg-white border-3 border-black shadow-[4px_4px_0px_var(--black)] focus:outline-none focus:shadow-[6px_6px_0px_var(--black)] transition-all text-base"
+                    className="w-full pl-12 pr-4 py-3 font-bold bg-gray-50 border-3 border-black focus:outline-none focus:bg-[var(--yellow-50)] focus:shadow-[4px_4px_0px_rgba(0,0,0,0.1)] transition-all placeholder:text-gray-400 placeholder:font-medium"
                   />
-                  <svg className="absolute right-4 sm:right-5 top-1/2 -translate-y-1/2 w-5 h-5 sm:w-6 sm:h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">
+                      <SearchIcon />
+                  </div>
                 </div>
-                <select
-                  value={sortBy}
-                  onChange={e => setSortBy(e.target.value)}
-                  className="px-4 sm:px-5 py-3 sm:py-4 font-bold bg-white border-3 border-black shadow-[4px_4px_0px_var(--black)] cursor-pointer text-sm sm:text-base"
-                >
-                  <option value="newest">Newest First</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                  <option value="rating">Highest Rated</option>
-                  <option value="popularity">Most Popular</option>
-                </select>
+                
+                <div className="relative min-w-[200px]">
+                    <select
+                        value={sortBy}
+                        onChange={e => setSortBy(e.target.value)}
+                        className="w-full h-full px-4 py-3 font-bold bg-white border-3 border-black cursor-pointer focus:outline-none focus:bg-gray-50 appearance-none"
+                    >
+                        <option value="newest">✨ Newest First</option>
+                        <option value="price-low">💰 Price: Low to High</option>
+                        <option value="price-high">💎 Price: High to Low</option>
+                        <option value="rating">⭐ Highest Rated</option>
+                        <option value="popularity">🔥 Most Popular</option>
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <svg className="w-4 h-4 fill-black" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                    </div>
+                </div>
               </div>
 
-              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <p className="font-bold text-gray-600 text-sm sm:text-base">
-                  {filtered.length} product{filtered.length !== 1 ? 's' : ''} found
-                </p>
-              </div>
+              {/* Active Filters Display */}
+              {(activeTag || (activeCategory !== 'All' && window.innerWidth < 1024)) && (
+                <div className="flex flex-wrap gap-2 mb-6">
+                    {activeTag && (
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-black text-white font-bold text-sm border-2 border-black">
+                            #{activeTag}
+                            <button onClick={clearTag} className="hover:text-[var(--pink-500)] font-black text-lg leading-none">&times;</button>
+                        </div>
+                    )}
+                    {/* Mobile Category Display */}
+                    <div className="lg:hidden flex gap-2 overflow-x-auto pb-2 w-full">
+                        {CATEGORIES.map(cat => (
+                            <button
+                                key={cat}
+                                onClick={() => setActiveCategory(cat)}
+                                className={`flex-shrink-0 px-3 py-1 font-bold text-sm border-2 whitespace-nowrap ${
+                                    activeCategory === cat ? "bg-[var(--pink-500)] text-white border-black" : "bg-white border-black"
+                                }`}
+                            >
+                                {cat}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+              )}
 
+              {/* Product Grid */}
               {loading ? (
-                <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
                   {[...Array(6)].map((_, i) => (
-                    <div key={i} className="bg-white border-3 border-black shadow-[4px_4px_0px_var(--black)] animate-pulse">
-                      <div className="aspect-[4/3] bg-gray-200 border-b-3 border-black" />
-                      <div className="p-4 sm:p-5 space-y-3">
-                        <div className="h-4 bg-gray-200 w-1/3" />
-                        <div className="h-6 bg-gray-200 w-3/4" />
-                        <div className="h-4 bg-gray-200 w-full" />
-                      </div>
+                    <div key={i} className="bg-white border-3 border-black shadow-[4px_4px_0px_black] h-96 animate-pulse p-4">
+                        <div className="bg-gray-200 h-48 mb-4 border-2 border-black/10"></div>
+                        <div className="h-6 bg-gray-200 w-3/4 mb-2"></div>
+                        <div className="h-4 bg-gray-200 w-1/2"></div>
                     </div>
                   ))}
                 </div>
               ) : filtered.length === 0 ? (
-                <div className="bg-white border-3 border-black shadow-[4px_4px_0px_var(--black)] p-8 sm:p-12 text-center">
-                  <div className="text-5xl sm:text-6xl mb-4">🔍</div>
-                  <h3 className="font-black text-xl sm:text-2xl mb-2">No products found</h3>
-                  <p className="text-gray-600">Try adjusting your search or filters</p>
+                <div className="bg-white border-3 border-black shadow-[8px_8px_0px_black] p-16 text-center">
+                  <div className="text-7xl mb-4 grayscale opacity-30">🕸️</div>
+                  <h3 className="font-black text-2xl uppercase mb-2">No Results</h3>
+                  <p className="text-gray-600 font-medium">Try adjusting your search or filters to find what you need.</p>
+                  <button onClick={() => {setSearch(""); setActiveCategory("All"); setActiveTag("");}} className="mt-6 px-6 py-2 bg-[var(--yellow-400)] border-3 border-black font-bold uppercase hover:translate-x-1 hover:translate-y-1 transition-transform">
+                      Clear Filters
+                  </button>
                 </div>
               ) : (
-                <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
                   {filtered.map((product, i) => (
                     <ProductCard 
                       key={product.id} 
                       product={product} 
                       navigate={navigate}
-                      onTagClick={handleTagClick}
-                      delay={i * 0.05}
                     />
                   ))}
                 </div>
@@ -260,129 +283,69 @@ export default function BrowsePage() {
   );
 }
 
-function FeaturedCard({ product, navigate }) {
-  const creatorName = product.creator?.display_name || product.creator?.name || "Anonymous";
-
+// --- REUSABLE PRODUCT CARD COMPONENT ---
+function ProductCard({ product, navigate, isFeatured }) {
   return (
     <div
       onClick={() => navigate(`/product/${product.id}`)}
-      className="relative h-80 bg-white border-3 border-black shadow-[6px_6px_0px_var(--black)] cursor-pointer hover:translate-x-[-4px] hover:translate-y-[-4px] hover:shadow-[10px_10px_0px_var(--black)] transition-all overflow-hidden group"
+      className={`group relative bg-white border-3 border-black cursor-pointer transition-all duration-200 flex flex-col h-full ${
+        isFeatured 
+        ? "shadow-[6px_6px_0px_var(--pink-500)] hover:shadow-[10px_10px_0px_var(--pink-500)] hover:-translate-y-1" 
+        : "shadow-[6px_6px_0px_black] hover:shadow-[10px_10px_0px_black] hover:-translate-y-1"
+      }`}
     >
-      {product.thumbnail_url ? (
-        <img src={product.thumbnail_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-      ) : (
-        <div className="w-full h-full bg-gradient-to-br from-[var(--pink-200)] to-[var(--pink-400)] flex items-center justify-center">
-          <span className="text-8xl">📦</span>
-        </div>
-      )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="px-3 py-1 text-xs font-bold uppercase bg-[var(--pink-500)] border-2 border-white">Featured</span>
-          {product.rating_avg > 0 && (
-            <span className="flex items-center gap-1 text-sm">
-              <svg className="w-4 h-4 fill-yellow-400" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-              {product.rating_avg.toFixed(1)}
-            </span>
-          )}
-        </div>
-        <h3 className="font-black text-2xl mb-1 line-clamp-1">{product.name}</h3>
-        <div className="flex items-center justify-between">
-          <Link 
-            to={`/seller/${product.creator?.id}`}
-            onClick={(e) => e.stopPropagation()}
-            className="text-sm opacity-80 hover:opacity-100 hover:underline"
-          >
-            by {creatorName}
-          </Link>
-          <span className="font-black text-xl">{product.currency === 'INR' ? '₹' : '$'}{product.price}</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ProductCard({ product, navigate, onTagClick, delay }) {
-  const creatorName = product.creator?.display_name || product.creator?.name || "Anonymous";
-
-  return (
-    <div
-      onClick={() => navigate(`/product/${product.id}`)}
-      className="bg-white border-3 border-black shadow-[4px_4px_0px_var(--black)] cursor-pointer hover:translate-x-[-4px] hover:translate-y-[-4px] hover:shadow-[8px_8px_0px_var(--black)] transition-all animate-slide-up opacity-0"
-      style={{ animationDelay: `${delay}s`, animationFillMode: "forwards" }}
-    >
-      <div className="aspect-[4/3] bg-[var(--pink-50)] border-b-3 border-black flex items-center justify-center overflow-hidden relative group">
+      {/* Image Container */}
+      <div className="aspect-[4/3] bg-gray-100 border-b-3 border-black relative overflow-hidden">
+        {/* Overlay on hover */}
+        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity z-10" />
+        
         {product.thumbnail_url ? (
           <img 
             src={product.thumbnail_url} 
             alt={product.name} 
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500 ease-in-out"
           />
         ) : (
-          <div className="text-center">
-            <span className="text-6xl">📦</span>
-          </div>
+          <div className="w-full h-full flex items-center justify-center text-4xl bg-[var(--pink-50)]">📦</div>
         )}
-        {product.is_featured && (
-          <div className="absolute top-3 right-3 px-3 py-1 bg-[var(--yellow-400)] border-2 border-black font-bold text-xs uppercase rotate-3">
-            Featured
-          </div>
+
+        {/* Floating Category Tag */}
+        {product.category && product.category[0] && (
+            <div className="absolute top-3 left-3 z-20">
+                <span className="px-2 py-1 text-[10px] font-black uppercase bg-black text-white border border-white shadow-sm tracking-wider">
+                    {product.category[0]}
+                </span>
+            </div>
         )}
       </div>
-      <div className="p-5">
-        <div className="flex flex-wrap gap-2 mb-3">
-          {product.category?.slice(0, 2).map((cat, j) => (
-            <span key={j} className="px-3 py-1 text-xs font-bold uppercase bg-[var(--mint)] border-2 border-black">
-              {cat}
-            </span>
-          ))}
-        </div>
-        <h3 className="font-black text-xl mb-2 line-clamp-1">{product.name}</h3>
-        <p className="text-sm text-gray-600 line-clamp-2 mb-3 h-10">{product.description}</p>
-        
-        {product.tags?.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {product.tags.slice(0, 3).map((tag, j) => (
-              <button
-                key={j}
-                onClick={(e) => onTagClick(tag, e)}
-                className="px-2 py-0.5 text-xs font-bold text-[var(--pink-600)] bg-[var(--pink-50)] border border-[var(--pink-200)] hover:bg-[var(--pink-100)] transition-colors"
-              >
-                #{tag}
-              </button>
-            ))}
-          </div>
-        )}
-        
-        <Link 
-          to={`/seller/${product.creator?.id}`}
-          onClick={(e) => e.stopPropagation()}
-          className="flex items-center gap-2 mb-4 group/seller"
-        >
-          <div className="w-6 h-6 rounded-full bg-[var(--pink-200)] border-2 border-black flex items-center justify-center text-xs font-bold overflow-hidden">
-            {product.creator?.profile_image_url ? (
-              <img src={product.creator.profile_image_url} alt="" className="w-full h-full object-cover" />
-            ) : (
-              creatorName.charAt(0).toUpperCase()
-            )}
-          </div>
-          <span className="text-sm text-gray-600 group-hover/seller:text-[var(--pink-600)] group-hover/seller:underline">{creatorName}</span>
-        </Link>
 
-        <div className="flex items-center justify-between pt-3 border-t-2 border-dashed border-gray-200">
+      {/* Card Body */}
+      <div className="p-5 flex flex-col flex-1">
+        <h3 className="font-black text-lg leading-tight mb-2 line-clamp-2 group-hover:text-[var(--pink-600)] transition-colors uppercase">
+            {product.name}
+        </h3>
+        
+        <p className="text-xs text-gray-500 font-bold line-clamp-2 mb-4 flex-1">
+            {product.description}
+        </p>
+
+        {/* Footer info */}
+        <div className="mt-auto pt-4 border-t-2 border-dashed border-gray-300 flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="font-black text-2xl text-[var(--pink-600)]">
+            {/* Price Tag Style */}
+            <span className="inline-block bg-[var(--yellow-400)] text-black border-2 border-black px-2 py-0.5 text-base font-black transform -rotate-2 group-hover:rotate-0 transition-transform w-fit shadow-[2px_2px_0px_rgba(0,0,0,0.1)]">
               {product.currency === 'INR' ? '₹' : '$'}{product.price}
             </span>
+            
             {product.rating_count > 0 && (
-              <div className="flex items-center gap-1 text-sm text-gray-500">
-                <svg className="w-4 h-4 fill-yellow-400" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                {product.rating_avg?.toFixed(1)} ({product.rating_count})
-              </div>
+                <div className="flex items-center gap-1 mt-1 text-[10px] font-bold text-gray-500 uppercase">
+                    <span className="text-yellow-500 text-sm">★</span> {product.rating_avg?.toFixed(1)} ({product.rating_count})
+                </div>
             )}
           </div>
-          <button className="px-5 py-2 font-bold uppercase bg-[var(--pink-500)] text-white border-3 border-black shadow-[3px_3px_0px_var(--black)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[5px_5px_0px_var(--black)] transition-all">
-            View
+
+          <button className="w-8 h-8 flex items-center justify-center bg-black text-white rounded-full group-hover:bg-[var(--pink-500)] transition-colors border-2 border-black">
+            <svg className="w-4 h-4 transform -rotate-45 group-hover:rotate-0 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
           </button>
         </div>
       </div>

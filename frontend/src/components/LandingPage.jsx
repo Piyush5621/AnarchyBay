@@ -555,8 +555,9 @@ export function HeroScrollDemo() {
       const windowHeight = window.innerHeight;
       
       // Calculate scroll progress (0 to 1)
+      // We want it to finish animating when it's mostly visible
       const visible = Math.min(
-        Math.max((windowHeight - rect.top) / (windowHeight + rect.height), 0),
+        Math.max((windowHeight - rect.top) / (windowHeight + rect.height * 0.5), 0),
         1
       );
       setProgress(visible);
@@ -570,69 +571,110 @@ export function HeroScrollDemo() {
   return (
     <div
       ref={ref}
-      className="relative w-full h-[500px] md:h-[600px] flex items-center justify-center overflow-hidden py-10"
+      className="relative w-full h-[600px] md:h-[700px] flex items-center justify-center overflow-hidden py-10 perspective-[1200px]"
     >
-      {/* Background Pattern */}
-      <div className="absolute inset-0 w-full h-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px] opacity-60" />
+      {/* Dynamic Background Elements */}
+      <div className="absolute inset-0 w-full h-full bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:24px_24px] opacity-10" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[var(--pink-200)] rounded-full blur-[100px] opacity-30 -z-10" />
 
       {/* Animated Container */}
       <div
-        className="relative z-10 w-[90%] max-w-5xl"
+        className="relative z-10 w-[95%] max-w-5xl"
         style={{
-          transform: `perspective(1000px) rotateX(${20 - progress * 20}deg) scale(${0.8 + progress * 0.2})`,
-          opacity: 0.5 + progress * 0.5,
-          transition: "transform 0.1s linear, opacity 0.1s linear",
+          transform: `rotateX(${25 - progress * 25}deg) scale(${0.85 + progress * 0.15}) translateY(${50 - progress * 50}px)`,
+          opacity: 0.6 + progress * 0.4,
+          transition: "transform 0.1s ease-out, opacity 0.1s linear",
         }}
       >
-        {/* Mock Browser Window */}
-        <div className="bg-white rounded-xl border-3 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
+        {/* Mock Browser Window - Neo Brutalist Style */}
+        <div className="bg-white rounded-xl border-4 border-black shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
           
           {/* Browser Header */}
-          <div className="flex items-center gap-2 px-4 py-3 bg-white border-b-3 border-black">
+          <div className="flex items-center gap-3 px-4 py-3 bg-[var(--yellow-400)] border-b-4 border-black">
             <div className="flex gap-2">
-              <span className="w-3 h-3 rounded-full bg-red-500 border border-black" />
-              <span className="w-3 h-3 rounded-full bg-yellow-400 border border-black" />
-              <span className="w-3 h-3 rounded-full bg-green-500 border border-black" />
+              <span className="w-4 h-4 rounded-full bg-white border-2 border-black" />
+              <span className="w-4 h-4 rounded-full bg-white border-2 border-black opacity-50" />
             </div>
-            <div className="flex-1 text-center">
-              <div className="inline-block px-3 py-1 bg-gray-100 border border-black rounded-md text-[10px] font-mono text-gray-500">
-                anarchybay.store/product/design-kit
+            <div className="flex-1 px-4">
+              <div className="w-full max-w-md mx-auto bg-white border-2 border-black rounded-full h-8 flex items-center justify-center px-4 shadow-sm">
+                <span className="w-3 h-3 bg-green-500 rounded-full mr-2 border border-black"></span>
+                <span className="text-xs font-black uppercase tracking-widest text-gray-500">
+                  store.anarchybay.com/creator/design-kit
+                </span>
               </div>
             </div>
+            <div className="w-10"></div> {/* Spacer for balance */}
           </div>
 
           {/* Browser Content (Split Layout) */}
-          <div className="grid md:grid-cols-5 h-[400px]">
+          <div className="grid md:grid-cols-2 h-auto md:h-[450px]">
             
             {/* Left: Product Details */}
-            <div className="md:col-span-3 p-8 flex flex-col justify-center border-b-3 md:border-b-0 md:border-r-3 border-black bg-white">
-               <div className="inline-block self-start px-3 py-1 bg-yellow-400 border-2 border-black text-xs font-black uppercase mb-4 rotate-[-2deg]">
-                 Best Seller
-               </div>
-               <h1 className="text-4xl font-black mb-2 text-slate-900 leading-tight">
-                 Ultimate <br/> Creator Pack
-               </h1>
-               <p className="text-slate-600 mb-6 font-medium">
-                 Everything you need to ship your next project. Icons, illustrations, and templates included.
-               </p>
+            <div className="p-8 md:p-12 flex flex-col justify-center border-b-4 md:border-b-0 md:border-r-4 border-black bg-white relative">
                
-               <div className="flex items-center gap-4 mt-auto">
-                 <div className="text-3xl font-black text-pink-600">₹2,999</div>
-                 <button className="flex-1 bg-black text-white py-3 px-6 font-bold uppercase border-2 border-black shadow-[4px_4px_0px_var(--pink-500)] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_var(--pink-500)] transition-all">
-                   I want this!
-                 </button>
+               {/* Floating Badge */}
+               <div className="absolute top-6 left-6 rotate-[-6deg]">
+                 <span className="px-4 py-1 bg-[var(--mint)] border-2 border-black font-black text-xs uppercase shadow-[2px_2px_0px_black]">
+                   Best Seller
+                 </span>
+               </div>
+
+               <div className="mt-8 md:mt-0">
+                 <div className="flex items-center gap-1 mb-4">
+                    {[1,2,3,4,5].map(i => (
+                        <svg key={i} className="w-5 h-5 fill-[var(--yellow-400)] text-black" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" /></svg>
+                    ))}
+                    <span className="ml-2 font-bold text-sm">(124)</span>
+                 </div>
+
+                 <h1 className="text-5xl md:text-6xl font-black mb-4 text-black leading-[0.9]">
+                   Supafast <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--pink-500)] to-purple-600">UI Bundle</span>
+                 </h1>
+                 
+                 <p className="text-lg text-gray-600 mb-8 font-medium leading-relaxed max-w-sm">
+                   Get 500+ handcrafted components. Ship your next project in hours, not days.
+                 </p>
+                 
+                 <div className="flex flex-col sm:flex-row items-center gap-4 mt-auto">
+                   <div className="bg-black text-white px-6 py-4 font-black text-2xl border-2 border-black shadow-[4px_4px_0px_var(--pink-500)] -rotate-2">
+                     ₹4,999
+                   </div>
+                   <button className="flex-1 w-full bg-[var(--yellow-400)] text-black py-4 px-8 font-black uppercase tracking-wider border-2 border-black shadow-[4px_4px_0px_black] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_black] transition-all">
+                     Buy Now
+                   </button>
+                 </div>
                </div>
             </div>
 
-            {/* Right: Product Image */}
-            <div className="md:col-span-2 bg-pink-50 flex items-center justify-center p-8 relative overflow-hidden">
-               {/* Decorative Circle */}
-               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-purple-400 rounded-full blur-3xl opacity-50" />
+            {/* Right: Abstract Visual */}
+            <div className="bg-gray-50 flex items-center justify-center p-12 relative overflow-hidden">
+               {/* Pattern Background */}
+               <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #000 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
                
-               {/* 3D Icon */}
-               <div className="relative z-10 transform rotate-12 transition-transform hover:rotate-0 hover:scale-110 duration-500">
-                  <div className="w-40 h-40 bg-gradient-to-br from-yellow-400 to-orange-500 border-3 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] rounded-2xl flex items-center justify-center">
-                    <span className="text-6xl filter drop-shadow-md">🎨</span>
+               {/* Floating Elements */}
+               <div className="relative w-64 h-64">
+                  {/* Back Card */}
+                  <div className="absolute top-0 right-0 w-full h-full bg-[var(--mint)] border-4 border-black rounded-2xl transform rotate-6 translate-x-4 translate-y-4"></div>
+                  
+                  {/* Front Card */}
+                  <div className="absolute top-0 right-0 w-full h-full bg-[var(--pink-500)] border-4 border-black rounded-2xl shadow-[8px_8px_0px_black] flex items-center justify-center transform -rotate-3 hover:rotate-0 transition-transform duration-500">
+                     <div className="text-white text-center">
+                        <div className="text-7xl mb-2">⚡</div>
+                        <div className="font-black uppercase text-2xl border-b-4 border-white pb-1 inline-block">Pro Pack</div>
+                     </div>
+                  </div>
+
+                  {/* Decorative Elements */}
+                  <div className="absolute -top-12 -left-12 text-6xl animate-bounce-subtle">✨</div>
+                  <div className="absolute -bottom-8 -right-8 w-20 h-20 bg-black rounded-full border-4 border-white flex items-center justify-center text-white font-black text-xs uppercase animate-spin-slow">
+                    <svg viewBox="0 0 100 100" width="80" height="80">
+                      <path id="curve" d="M 50, 50 m -37, 0 a 37,37 0 1,1 74,0 a 37,37 0 1,1 -74,0" fill="transparent"/>
+                      <text className="text-[11px] font-bold fill-white uppercase tracking-widest">
+                        <textPath href="#curve">
+                          Instant Download • 100% Secure •
+                        </textPath>
+                      </text>
+                    </svg>
                   </div>
                </div>
             </div>

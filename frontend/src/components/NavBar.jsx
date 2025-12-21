@@ -70,7 +70,7 @@ export default function NavBar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           {/* Adjusted height: h-16 on mobile, h-20 on desktop */}
           <div className="flex items-center justify-between h-16 md:h-20">
-            
+
             {/* LOGO SECTION */}
             <button
               onClick={() => navigate("/")}
@@ -110,7 +110,7 @@ export default function NavBar() {
 
             {/* RIGHT SIDE ICONS */}
             <div className="flex items-center gap-2">
-              
+
               {/* SEARCH BUTTON */}
               <button
                 onClick={() => setSpotlightOpen(true)}
@@ -131,7 +131,7 @@ export default function NavBar() {
                 }}
                 className="w-9 h-9 md:w-12 md:h-10 flex items-center justify-center border-3 border-black bg-white hover:bg-[var(--yellow-400)] hover:shadow-[3px_3px_0px_var(--black)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all"
               >
-                 {/* Adjusted image size to fit nicely in the button */}
+                {/* Adjusted image size to fit nicely in the button */}
                 <img src={cart} alt="Cart" className="w-5 h-5 md:w-6 md:h-6 object-contain" />
               </button>
 
@@ -149,7 +149,7 @@ export default function NavBar() {
                       <span className="text-base md:text-lg font-bold">{(name || "U").charAt(0).toUpperCase()}</span>
                     )}
                   </button>
-                  
+
                   {/* DROPDOWN */}
                   {avatarDropdownOpen && (
                     <div className="absolute right-0 top-full mt-2 w-56 bg-white border-3 border-black shadow-[4px_4px_0px_var(--black)] z-50 animate-liquid-dropdown">
@@ -161,7 +161,13 @@ export default function NavBar() {
                         onClick={() => { navigate("/dashboard"); setAvatarDropdownOpen(false); }}
                         className="w-full px-4 py-3 text-left font-bold uppercase text-sm hover:bg-[var(--yellow-400)] border-b-3 border-black flex items-center gap-2"
                       >
-                         Dashboard
+                        Dashboard
+                      </button>
+                      <button
+                        onClick={() => { navigate("/profile"); setAvatarDropdownOpen(false); }}
+                        className="w-full px-4 py-3 text-left font-bold uppercase text-sm hover:bg-[var(--yellow-400)] border-b-3 border-black flex items-center gap-2"
+                      >
+                        View Public Profile
                       </button>
                       <button
                         onClick={() => { navigate("/settings/profile"); setAvatarDropdownOpen(false); }}

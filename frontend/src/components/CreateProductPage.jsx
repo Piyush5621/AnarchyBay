@@ -23,15 +23,15 @@ const PAGE_COLORS = [
 function renderMarkdown(text) {
   if (!text) return "";
   let html = text
-    .replace(/^### (.+)$/gm, "<h3 class='text-base font-semibold mt-3 mb-1'>$1</h3>")
-    .replace(/^## (.+)$/gm, "<h2 class='text-lg font-semibold mt-4 mb-2'>$1</h2>")
-    .replace(/^# (.+)$/gm, "<h1 class='text-xl font-bold mt-5 mb-2'>$1</h1>")
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/^### (.+)$/gm, "<h3 class='text-lg font-black uppercase mt-3 mb-1'>$1</h3>")
+    .replace(/^## (.+)$/gm, "<h2 class='text-xl font-black uppercase mt-4 mb-2 border-b-2 border-black pb-1'>$1</h2>")
+    .replace(/^# (.+)$/gm, "<h1 class='text-2xl font-black uppercase mt-5 mb-2'>$1</h1>")
+    .replace(/\*\*(.+?)\*\*/g, "<strong class='bg-yellow-200 px-1'>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    .replace(/`(.+?)`/g, "<code class='px-1 py-0.5 bg-slate-100 rounded text-xs font-mono'>$1</code>")
-    .replace(/^- (.+)$/gm, "<li class='ml-4 list-disc'>$1</li>")
-    .replace(/^\d+\. (.+)$/gm, "<li class='ml-4 list-decimal'>$1</li>")
-    .replace(/\[(.+?)\]\((.+?)\)/g, "<a href='$2' class='text-slate-900 underline' target='_blank'>$1</a>")
+    .replace(/`(.+?)`/g, "<code class='px-1 py-0.5 bg-black text-white rounded-sm text-xs font-mono'>$1</code>")
+    .replace(/^- (.+)$/gm, "<li class='ml-4 list-disc marker:font-bold'>$1</li>")
+    .replace(/^\d+\. (.+)$/gm, "<li class='ml-4 list-decimal marker:font-bold'>$1</li>")
+    .replace(/\[(.+?)\]\((.+?)\)/g, "<a href='$2' class='text-pink-600 underline font-bold' target='_blank'>$1</a>")
     .replace(/\n\n/g, "</p><p class='mb-2'>")
     .replace(/\n/g, "<br/>");
   return `<p class='mb-2'>${html}</p>`;
@@ -185,96 +185,108 @@ export default function CreateProductPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#f3f4f6] bg-[radial-gradient(#000000_1px,transparent_1px)] [background-size:20px_20px] opacity-100">
       <NavBar />
 
-      <main className="pt-24 pb-20">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="mb-8">
-            <h1 className="font-display text-4xl mb-2">Create Product</h1>
-            <p className="text-slate-500">Upload files, set price, and start selling</p>
+      <main className="pt-28 pb-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          
+          <div className="mb-10 text-center md:text-left">
+            <h1 className="font-black text-5xl mb-2 uppercase italic tracking-tighter bg-black text-white inline-block px-4 py-1 transform -rotate-1 shadow-[4px_4px_0px_rgba(0,0,0,0.2)]">
+                Create Product
+            </h1>
+            <p className="text-black font-bold text-lg mt-2 ml-1">Upload files, set price, and start selling.</p>
           </div>
 
           <form onSubmit={handleSubmit}>
-            <div className="grid lg:grid-cols-5 gap-8">
-              <div className="lg:col-span-3 space-y-6">
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                  <h2 className="font-semibold mb-4 flex items-center gap-2">
-                    <span className="w-6 h-6 bg-slate-900 rounded-full flex items-center justify-center text-white text-xs">1</span>
-                    Product Details
-                  </h2>
+            {/* GRID LAYOUT EXPLANATION:
+                lg:grid-cols-12: Creates a 12-column grid.
+                items-start: Ensures the columns align at the top, allowing sticky to work.
+            */}
+            <div className="grid lg:grid-cols-12 gap-8 items-start">
+              
+              {/* === LEFT COLUMN (FORM) - Takes 7/12 width === */}
+              <div className="lg:col-span-7 space-y-8">
+                
+                {/* 1. Details Card */}
+                <div className="bg-white border-3 border-black shadow-[8px_8px_0px_black] p-6 relative">
+                  <div className="absolute -top-4 -left-4 w-10 h-10 bg-[var(--pink-500)] border-3 border-black flex items-center justify-center text-white font-black text-xl shadow-[2px_2px_0px_black]">1</div>
+                  <h2 className="font-black text-xl uppercase mb-6 ml-4">Product Details</h2>
 
-                  <div className="space-y-4">
+                  <div className="space-y-5">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Product Name *</label>
+                      <label className="block text-sm font-black uppercase mb-2">Product Name <span className="text-red-500">*</span></label>
                       <input
                         type="text"
                         value={form.name}
                         onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
                         placeholder="e.g., Premium UI Kit for Figma"
-                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition-all"
+                        className="w-full px-4 py-3 bg-white border-3 border-black font-bold focus:outline-none focus:shadow-[4px_4px_0px_var(--yellow-400)] transition-all placeholder:font-normal"
                         required
                       />
                     </div>
 
                     <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-sm font-medium text-slate-700">Short Description</label>
-                        <span className={`text-xs ${form.short_description.length > SHORT_DESC_LIMIT * 0.9 ? "text-pink-500 font-medium" : "text-slate-400"}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-black uppercase">Short Description</label>
+                        <span className={`text-xs font-bold border-2 border-black px-2 ${form.short_description.length > SHORT_DESC_LIMIT * 0.9 ? "bg-red-200" : "bg-gray-100"}`}>
                           {form.short_description.length}/{SHORT_DESC_LIMIT}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-400 mb-2">Brief summary for product cards</p>
                       <textarea
                         value={form.short_description}
                         onChange={e => setForm(p => ({ ...p, short_description: e.target.value.slice(0, SHORT_DESC_LIMIT) }))}
-                        placeholder="A brief tagline for your product..."
+                        placeholder="A brief tagline..."
                         rows={2}
-                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition-all resize-none"
+                        className="w-full px-4 py-3 bg-white border-3 border-black font-medium focus:outline-none focus:shadow-[4px_4px_0px_var(--yellow-400)] transition-all resize-none placeholder:font-normal"
                       />
                     </div>
 
                     <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-sm font-medium text-slate-700">Long Description</label>
-                        <span className={`text-xs ${form.long_description.length > LONG_DESC_LIMIT * 0.9 ? "text-pink-500 font-medium" : "text-slate-400"}`}>
-                          {form.long_description.length}/{LONG_DESC_LIMIT}
-                        </span>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-black uppercase">Long Description</label>
+                        <button type="button" onClick={() => setShowLongDescPreview(!showLongDescPreview)} className="text-xs font-bold uppercase underline hover:text-[var(--pink-500)]">
+                          {showLongDescPreview ? "Edit Mode" : "Preview Mode"}
+                        </button>
                       </div>
-                      <p className="text-xs text-slate-400 mb-2">Detailed description with markdown support</p>
-                      <div className="border border-slate-200 rounded-xl overflow-hidden">
-                        <div className="flex items-center gap-1 px-3 py-2 bg-slate-50 border-b border-slate-200">
-                          <button type="button" onClick={() => insertMarkdown("long_description", "**bold**")} className="px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors">B</button>
-                          <button type="button" onClick={() => insertMarkdown("long_description", "*italic*")} className="px-2 py-1 text-xs italic hover:bg-white rounded transition-colors">I</button>
-                          <button type="button" onClick={() => insertMarkdown("long_description", "`code`")} className="px-2 py-1 text-xs font-mono hover:bg-white rounded transition-colors">&lt;&gt;</button>
-                          <button type="button" onClick={() => insertMarkdown("long_description", "\n- ")} className="px-2 py-1 text-xs hover:bg-white rounded transition-colors">List</button>
-                          <button type="button" onClick={() => insertMarkdown("long_description", "\n## ")} className="px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors">H2</button>
-                          <button type="button" onClick={() => insertMarkdown("long_description", "[text](url)")} className="px-2 py-1 text-xs hover:bg-white rounded transition-colors">Link</button>
-                          <div className="ml-auto">
-                            <button type="button" onClick={() => setShowLongDescPreview(!showLongDescPreview)} className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${showLongDescPreview ? "bg-slate-900 text-white" : "hover:bg-white"}`}>
-                              {showLongDescPreview ? "Edit" : "Preview"}
-                            </button>
-                          </div>
+                      
+                      <div className="border-3 border-black bg-white">
+                        {/* Markdown Toolbar */}
+                        <div className="flex flex-wrap gap-2 p-2 bg-gray-100 border-b-3 border-black">
+                          {['**bold**', '*italic*', '`code`', '\n- ', '\n## ', '[link](url)'].map((syntax, i) => (
+                             <button 
+                                key={i} 
+                                type="button" 
+                                onClick={() => insertMarkdown("long_description", syntax)}
+                                className="px-2 py-1 bg-white border-2 border-black text-xs font-bold hover:bg-black hover:text-white transition-colors"
+                             >
+                                {syntax.replace(/[*`\n\[\]()]/g, '') || 'List'}
+                             </button>
+                          ))}
                         </div>
+
                         {showLongDescPreview ? (
-                          <div className="px-4 py-3 min-h-[180px] text-sm text-slate-600 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: renderMarkdown(form.long_description) || "<p class='text-slate-400'>Nothing to preview...</p>" }} />
+                          <div className="p-4 min-h-[200px] prose prose-sm max-w-none bg-white" dangerouslySetInnerHTML={{ __html: renderMarkdown(form.long_description) || "<p class='text-gray-400 italic'>Nothing to preview...</p>" }} />
                         ) : (
                           <textarea
                             value={form.long_description}
                             onChange={e => setForm(p => ({ ...p, long_description: e.target.value.slice(0, LONG_DESC_LIMIT) }))}
-                            placeholder="Describe what's included, features, requirements..."
+                            placeholder="Describe features, requirements, etc..."
                             rows={8}
-                            className="w-full px-4 py-3 bg-white focus:outline-none resize-none text-sm"
+                            className="w-full p-4 bg-white focus:outline-none resize-none font-mono text-sm placeholder:font-sans placeholder:text-gray-400"
                           />
                         )}
+                        <div className="bg-black text-white text-xs font-bold px-2 py-1 text-right">
+                           {form.long_description.length}/{LONG_DESC_LIMIT}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Price *</label>
+                        <label className="block text-sm font-black uppercase mb-2">Price <span className="text-red-500">*</span></label>
                         <div className="relative">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-slate-600">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 font-black text-lg">
                             {form.currency === "INR" ? "₹" : "$"}
                           </span>
                           <input
@@ -284,17 +296,17 @@ export default function CreateProductPage() {
                             value={form.price}
                             onChange={e => setForm(p => ({ ...p, price: e.target.value }))}
                             placeholder="499"
-                            className="w-full pl-10 pr-4 py-3 font-semibold text-lg bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition-all"
+                            className="w-full pl-8 pr-4 py-3 bg-white border-3 border-black font-black text-lg focus:outline-none focus:shadow-[4px_4px_0px_var(--yellow-400)] transition-all"
                             required
                           />
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
+                        <label className="block text-sm font-black uppercase mb-2">Currency</label>
                         <select
                           value={form.currency}
                           onChange={e => setForm(p => ({ ...p, currency: e.target.value }))}
-                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none cursor-pointer"
+                          className="w-full px-4 py-3 bg-white border-3 border-black font-bold focus:outline-none focus:shadow-[4px_4px_0px_var(--yellow-400)] cursor-pointer"
                         >
                           <option value="INR">INR (₹)</option>
                           <option value="USD">USD ($)</option>
@@ -303,17 +315,17 @@ export default function CreateProductPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">Categories *</label>
+                      <label className="block text-sm font-black uppercase mb-2">Categories <span className="text-red-500">*</span></label>
                       <div className="flex flex-wrap gap-2">
                         {CATEGORIES.map(cat => (
                           <button
                             key={cat}
                             type="button"
                             onClick={() => toggleCategory(cat)}
-                            className={`px-3 py-2 text-sm font-medium rounded-full transition-all ${
+                            className={`px-4 py-2 text-sm font-bold uppercase border-2 border-black transition-all shadow-[2px_2px_0px_black] hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_black] ${
                               form.categories.includes(cat)
-                                ? "bg-slate-900 text-white"
-                                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                ? "bg-[var(--pink-500)] text-white"
+                                : "bg-white text-black hover:bg-[var(--yellow-200)]"
                             }`}
                           >
                             {cat}
@@ -323,84 +335,81 @@ export default function CreateProductPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Tags (comma separated)</label>
+                      <label className="block text-sm font-black uppercase mb-2">Tags</label>
                       <input
                         type="text"
                         value={form.tags}
                         onChange={e => setForm(p => ({ ...p, tags: e.target.value }))}
-                        placeholder="e.g., figma, ui-kit, design-system"
-                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition-all"
+                        placeholder="figma, ui-kit, design (comma separated)"
+                        className="w-full px-4 py-3 bg-white border-3 border-black font-medium focus:outline-none focus:shadow-[4px_4px_0px_var(--yellow-400)] transition-all"
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                  <h2 className="font-semibold mb-4 flex items-center gap-2">
-                    <span className="w-6 h-6 bg-slate-900 rounded-full flex items-center justify-center text-white text-xs">2</span>
-                    Files & Media
-                  </h2>
+                {/* 2. Files Card */}
+                <div className="bg-white border-3 border-black shadow-[8px_8px_0px_black] p-6 relative">
+                  <div className="absolute -top-4 -left-4 w-10 h-10 bg-[var(--yellow-400)] border-3 border-black flex items-center justify-center text-black font-black text-xl shadow-[2px_2px_0px_black]">2</div>
+                  <h2 className="font-black text-xl uppercase mb-6 ml-4">Files & Media</h2>
 
-                  <div className="space-y-5">
+                  <div className="space-y-6">
+                    {/* Cover Image Upload */}
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">Cover Image</label>
+                      <label className="block text-sm font-black uppercase mb-2">Cover Image</label>
                       <div 
                         onClick={() => thumbnailInputRef.current?.click()}
-                        className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center cursor-pointer hover:border-slate-300 hover:bg-slate-50 transition-colors"
+                        className="border-3 border-dashed border-black bg-gray-50 p-8 text-center cursor-pointer hover:bg-[var(--pink-50)] transition-colors relative group"
                       >
                         {thumbnailPreview ? (
-                          <div className="relative inline-block">
-                            <img src={thumbnailPreview} alt="Thumbnail" className="max-h-40 mx-auto rounded-lg" />
+                          <div className="relative inline-block border-2 border-black shadow-[4px_4px_0px_rgba(0,0,0,0.1)]">
+                            <img src={thumbnailPreview} alt="Thumbnail" className="max-h-48" />
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); setThumbnail(null); setThumbnailPreview(null); }}
-                              className="absolute -top-2 -right-2 w-6 h-6 bg-slate-900 text-white rounded-full text-xs flex items-center justify-center hover:bg-slate-700"
+                              className="absolute -top-3 -right-3 w-8 h-8 bg-red-500 border-2 border-black text-white flex items-center justify-center hover:scale-110 transition-transform"
                             >
-                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                              ✕
                             </button>
                           </div>
                         ) : (
-                          <>
-                            <svg className="w-10 h-10 mx-auto mb-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                            </svg>
-                            <p className="text-sm font-medium text-slate-600">Click to upload cover image</p>
-                            <p className="text-xs text-slate-400 mt-1">PNG, JPG up to 5MB</p>
-                          </>
+                          <div className="group-hover:scale-105 transition-transform">
+                            <div className="text-4xl mb-2">🖼️</div>
+                            <p className="font-bold uppercase">Click to upload cover</p>
+                            <p className="text-xs font-bold text-gray-500">PNG, JPG (Max 5MB)</p>
+                          </div>
                         )}
                       </div>
                       <input ref={thumbnailInputRef} type="file" accept="image/*" onChange={handleThumbnailSelect} className="hidden" />
                     </div>
 
+                    {/* Product Files Upload */}
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">Product Files *</label>
+                      <label className="block text-sm font-black uppercase mb-2">Product Files <span className="text-red-500">*</span></label>
                       <div 
                         onClick={() => fileInputRef.current?.click()}
-                        className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center cursor-pointer hover:border-slate-300 hover:bg-slate-50 transition-colors"
+                        className="border-3 border-dashed border-black bg-gray-50 p-8 text-center cursor-pointer hover:bg-[var(--mint)] transition-colors group"
                       >
-                        <svg className="w-10 h-10 mx-auto mb-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                        </svg>
-                        <p className="text-sm font-medium text-slate-600">Click to upload files</p>
-                        <p className="text-xs text-slate-400 mt-1">ZIP, PDF, or any file type</p>
+                        <div className="group-hover:scale-105 transition-transform">
+                            <div className="text-4xl mb-2">📦</div>
+                            <p className="font-bold uppercase">Click to upload product files</p>
+                            <p className="text-xs font-bold text-gray-500">ZIP, PDF, Anything</p>
+                        </div>
                       </div>
                       <input ref={fileInputRef} type="file" multiple onChange={handleFileSelect} className="hidden" />
 
                       {files.length > 0 && (
-                        <div className="mt-3 space-y-2 max-h-40 overflow-y-auto">
+                        <div className="mt-4 space-y-2">
                           {files.map((file, i) => (
-                            <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                              <div className="flex items-center gap-3 min-w-0">
-                                <svg className="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                                </svg>
+                            <div key={i} className="flex items-center justify-between p-3 bg-white border-2 border-black shadow-[2px_2px_0px_black]">
+                              <div className="flex items-center gap-3 overflow-hidden">
+                                <div className="font-black text-xl">📄</div>
                                 <div className="min-w-0">
-                                  <p className="text-sm font-medium text-slate-700 truncate">{file.name}</p>
-                                  <p className="text-xs text-slate-400">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                                  <p className="text-sm font-bold truncate">{file.name}</p>
+                                  <p className="text-xs font-mono">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                                 </div>
                               </div>
-                              <button type="button" onClick={() => removeFile(i)} className="p-1 hover:bg-slate-200 rounded transition-colors flex-shrink-0">
-                                <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                              <button type="button" onClick={() => removeFile(i)} className="p-1 hover:bg-red-100 border border-transparent hover:border-red-500 transition-colors">
+                                🗑️
                               </button>
                             </div>
                           ))}
@@ -410,35 +419,30 @@ export default function CreateProductPage() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                  <h2 className="font-semibold mb-4 flex items-center gap-2">
-                    <span className="w-6 h-6 bg-slate-900 rounded-full flex items-center justify-center text-white text-xs">3</span>
-                    Preview & Proof
-                  </h2>
-                  <p className="text-sm text-slate-500 mb-4">Add images and videos to showcase your product</p>
+                {/* 3. Preview & Colors */}
+                <div className="bg-white border-3 border-black shadow-[8px_8px_0px_black] p-6 relative">
+                  <div className="absolute -top-4 -left-4 w-10 h-10 bg-[var(--mint)] border-3 border-black flex items-center justify-center text-black font-black text-xl shadow-[2px_2px_0px_black]">3</div>
+                  <h2 className="font-black text-xl uppercase mb-6 ml-4">Extras</h2>
 
-                  <div className="space-y-5">
+                  <div className="space-y-6">
+                    {/* Gallery */}
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">Preview Images</label>
+                      <label className="block text-sm font-black uppercase mb-2">Gallery Images</label>
                       <div 
                         onClick={() => previewImageInputRef.current?.click()}
-                        className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center cursor-pointer hover:border-slate-300 hover:bg-slate-50 transition-colors"
+                        className="border-3 border-dashed border-black bg-gray-50 p-4 text-center cursor-pointer hover:bg-gray-100 transition-colors"
                       >
-                        <svg className="w-8 h-8 mx-auto mb-1 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
-                        </svg>
-                        <p className="text-sm text-slate-500">Add screenshots or preview images</p>
+                        <p className="font-bold text-sm">+ Add Screenshots</p>
                       </div>
                       <input ref={previewImageInputRef} type="file" accept="image/*" multiple onChange={handlePreviewImageSelect} className="hidden" />
 
                       {previewImagePreviews.length > 0 && (
                         <div className="mt-3 grid grid-cols-3 gap-2">
                           {previewImagePreviews.map((img, i) => (
-                            <div key={i} className="relative aspect-video rounded-lg overflow-hidden bg-slate-100">
+                            <div key={i} className="relative aspect-video border-2 border-black overflow-hidden bg-gray-200 group">
                               <img src={img} alt="" className="w-full h-full object-cover" />
-                              <button type="button" onClick={() => removePreviewImage(i)} className="absolute top-1 right-1 w-5 h-5 bg-black/60 text-white rounded-full text-xs flex items-center justify-center hover:bg-black/80">
-                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                              <button type="button" onClick={() => removePreviewImage(i)} className="absolute top-1 right-1 w-6 h-6 bg-red-500 border border-black text-white flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                                ✕
                               </button>
                             </div>
                           ))}
@@ -446,9 +450,9 @@ export default function CreateProductPage() {
                       )}
                     </div>
 
+                    {/* Video Links */}
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">Video Links</label>
-                      <p className="text-xs text-slate-400 mb-2">YouTube or Vimeo links</p>
+                      <label className="block text-sm font-black uppercase mb-2">Video Links</label>
                       <div className="space-y-2">
                         {form.preview_videos.map((video, i) => (
                           <div key={i} className="flex gap-2">
@@ -456,161 +460,130 @@ export default function CreateProductPage() {
                               type="url"
                               value={video}
                               onChange={e => updateVideoLink(i, e.target.value)}
-                              placeholder="https://youtube.com/watch?v=..."
-                              className="flex-1 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+                              placeholder="YouTube / Vimeo URL"
+                              className="flex-1 px-4 py-2 bg-white border-2 border-black font-medium focus:outline-none focus:shadow-[3px_3px_0px_black]"
                             />
                             {form.preview_videos.length > 1 && (
-                              <button type="button" onClick={() => removeVideoLink(i)} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                                <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                              </button>
+                              <button type="button" onClick={() => removeVideoLink(i)} className="px-3 border-2 border-black bg-white hover:bg-red-100">✕</button>
                             )}
                           </div>
                         ))}
-                        <button type="button" onClick={addVideoLink} className="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1">
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                          Add another video
+                        <button type="button" onClick={addVideoLink} className="text-xs font-bold uppercase underline hover:text-blue-600">
+                          + Add another video
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Page Color */}
+                    <div>
+                      <label className="block text-sm font-black uppercase mb-3">Page Background</label>
+                      <div className="flex flex-wrap gap-3">
+                        {PAGE_COLORS.map(color => (
+                          <button
+                            key={color.value}
+                            type="button"
+                            onClick={() => setForm(p => ({ ...p, page_color: color.value }))}
+                            className={`w-10 h-10 border-2 transition-all hover:scale-110 ${
+                              form.page_color === color.value 
+                                ? "border-black shadow-[3px_3px_0px_black] scale-110" 
+                                : "border-gray-300"
+                            }`}
+                            style={{ backgroundColor: color.value }}
+                            title={color.name}
+                          />
+                        ))}
+                        <div className="relative group">
+                          <div className="w-10 h-10 border-2 border-dashed border-black flex items-center justify-center bg-white group-hover:bg-gray-100 cursor-pointer">🎨</div>
+                          <input
+                            type="color"
+                            value={form.page_color}
+                            onChange={e => setForm(p => ({ ...p, page_color: e.target.value }))}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* === RIGHT COLUMN (PREVIEW) - STICKY === */}
+              {/* This column takes 5/12 width and holds the sticky content */}
+              <div className="lg:col-span-5 relative h-full">
+                
+                {/* STICKY CONFIGURATION:
+                    sticky: Enables sticky behavior.
+                    top-24: Sticks 6rem from the top of the viewport.
+                    space-y-6: Adds space between the Preview Card and the Submit Button.
+                */}
+                <div className="sticky top-24 space-y-6">
+                  
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
+                    <h3 className="font-black uppercase tracking-widest text-sm">Live Preview</h3>
+                  </div>
+                  
+                  {/* PREVIEW CARD - MIMICS PRODUCT CARD */}
+                  <div className="bg-white border-4 border-black shadow-[10px_10px_0px_rgba(0,0,0,0.2)] overflow-hidden">
+                    <div className="aspect-[4/3] bg-gray-100 border-b-4 border-black relative flex items-center justify-center overflow-hidden">
+                      {thumbnailPreview ? (
+                        <img src={thumbnailPreview} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="text-6xl grayscale opacity-30">📦</div>
+                      )}
+                      
+                      {/* Floating Category Tag Preview */}
+                      {form.categories[0] && (
+                        <div className="absolute top-3 left-3 z-20">
+                            <span className="px-3 py-1 text-xs font-black uppercase bg-black text-white border-2 border-white shadow-sm">
+                                {form.categories[0]}
+                            </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-5">
+                      <h3 className="font-black text-2xl leading-none mb-2 line-clamp-2 uppercase">
+                        {form.name || "Product Name"}
+                      </h3>
+                      <p className="text-sm font-medium text-gray-600 line-clamp-2 mb-4 h-10">
+                        {form.short_description || "Your short description will appear here..."}
+                      </p>
+
+                      <div className="flex items-center justify-between pt-4 border-t-2 border-dashed border-black">
+                        <span className="inline-block bg-[var(--yellow-400)] text-black border-2 border-black px-2 py-0.5 text-lg font-black transform -rotate-1">
+                           {form.currency === "INR" ? "₹" : "$"}{form.price || "0"}
+                        </span>
+                        
+                        <button className="w-10 h-10 flex items-center justify-center bg-black text-white rounded-full">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
                         </button>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                  <h2 className="font-semibold mb-4 flex items-center gap-2">
-                    <span className="w-6 h-6 bg-slate-900 rounded-full flex items-center justify-center text-white text-xs">4</span>
-                    Page Customization
-                  </h2>
-                  <p className="text-sm text-slate-500 mb-4">Choose a background color for your product page</p>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-3">Page Background Color</label>
-                    <div className="flex flex-wrap gap-3">
-                      {PAGE_COLORS.map(color => (
-                        <button
-                          key={color.value}
-                          type="button"
-                          onClick={() => setForm(p => ({ ...p, page_color: color.value }))}
-                          className={`w-12 h-12 rounded-xl border-2 transition-all ${
-                            form.page_color === color.value 
-                              ? "border-black shadow-[3px_3px_0px_var(--black)] scale-110" 
-                              : "border-slate-200 hover:border-slate-400"
-                          }`}
-                          style={{ backgroundColor: color.value }}
-                          title={color.name}
-                        />
-                      ))}
-                      <div className="relative">
-                        <input
-                          type="color"
-                          value={form.page_color}
-                          onChange={e => setForm(p => ({ ...p, page_color: e.target.value }))}
-                          className="absolute inset-0 w-12 h-12 opacity-0 cursor-pointer"
-                        />
-                        <div 
-                          className="w-12 h-12 rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center hover:border-slate-400 transition-colors"
-                          style={{ backgroundColor: !PAGE_COLORS.find(c => c.value === form.page_color) ? form.page_color : 'transparent' }}
-                        >
-                          <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-xs text-slate-400 mt-2">Click the + to pick a custom color</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="lg:col-span-2">
-                <div className="sticky top-24 space-y-6">
-                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                    <h3 className="font-semibold mb-4">Preview</h3>
-                    
-                    <div className="rounded-xl border border-slate-200 overflow-hidden mb-4">
-                      <div className="aspect-[16/10] bg-slate-100 flex items-center justify-center overflow-hidden">
-                        {thumbnailPreview ? (
-                          <img src={thumbnailPreview} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <svg className="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                          </svg>
-                        )}
-                      </div>
-                      <div className="p-4">
-                        <h4 className="font-semibold mb-1 truncate">{form.name || "Product Name"}</h4>
-                        <p className="text-sm text-slate-500 line-clamp-2 mb-3">{form.short_description || "Short description..."}</p>
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-lg">
-                            {form.currency === "INR" ? "₹" : "$"}{form.price || "0"}
-                          </span>
-                          <div className="flex gap-1">
-                            {form.categories.slice(0, 2).map((cat, i) => (
-                              <span key={i} className="px-2 py-0.5 text-xs font-medium bg-slate-100 rounded-full">
-                                {cat}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2 text-sm mb-4">
-                      <div className="flex justify-between text-slate-500">
-                        <span>Files</span>
-                        <span className="font-medium text-slate-700">{files.length}</span>
-                      </div>
-                      <div className="flex justify-between text-slate-500">
-                        <span>Categories</span>
-                        <span className="font-medium text-slate-700">{form.categories.length}</span>
-                      </div>
-                      <div className="flex justify-between text-slate-500">
-                        <span>Preview Images</span>
-                        <span className="font-medium text-slate-700">{form.preview_images.length}</span>
-                      </div>
+                  {/* Summary & Submit */}
+                  <div className="bg-[var(--pink-50)] border-3 border-black p-6 shadow-[6px_6px_0px_black]">
+                    <h3 className="font-black uppercase mb-4 text-lg">Ready to Launch?</h3>
+                    <div className="space-y-2 text-sm font-bold text-gray-700 mb-6">
+                       <div className="flex justify-between"><span>Files:</span> <span>{files.length}</span></div>
+                       <div className="flex justify-between"><span>Images:</span> <span>{form.preview_images.length}</span></div>
+                       <div className="flex justify-between"><span>Videos:</span> <span>{form.preview_videos.filter(v=>v).length}</span></div>
                     </div>
 
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full py-4 font-medium rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full py-4 font-black uppercase text-xl bg-black text-white border-3 border-black shadow-[4px_4px_0px_white] hover:bg-[var(--pink-500)] hover:shadow-[6px_6px_0px_black] hover:-translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {loading ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                          </svg>
-                          Publishing...
-                        </span>
-                      ) : (
-                        "Publish Product"
-                      )}
+                      {loading ? "Publishing..." : "Publish Product 🚀"}
                     </button>
                   </div>
 
-                  <div className="bg-slate-50 rounded-2xl border border-slate-200 p-6">
-                    <h3 className="font-medium mb-3">Tips for Success</h3>
-                    <ul className="space-y-2 text-sm text-slate-600">
-                      <li className="flex items-start gap-2">
-                        <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                        Use a clear, descriptive title
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                        Add an eye-catching cover image
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                        Include preview images or video
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                        Write detailed description
-                      </li>
-                    </ul>
-                  </div>
                 </div>
               </div>
+
             </div>
           </form>
         </div>
