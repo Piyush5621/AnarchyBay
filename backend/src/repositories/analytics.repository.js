@@ -9,10 +9,9 @@ export const getCreatorSalesStats = async (creatorId, options = {}) => {
       amount,
       platform_fee,
       creator_earnings,
-      purchased_at,
-      products!inner(creator_id)
+      purchased_at
     `)
-    .eq("products.creator_id", creatorId)
+    .eq("seller_id", creatorId)
     .eq("status", "completed");
 
   if (startDate) {

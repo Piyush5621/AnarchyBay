@@ -1,7 +1,6 @@
 import LandingPage from './components/LandingPage.jsx';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Dashboard from './components/Dashboard.jsx';
-import UploadResource from './components/UploadResource.jsx';
 import MyLibrary from './components/MyLibrary.jsx';
 import Profile from './components/Profile.jsx';
 import ProductPage from './components/ProductPage.jsx';
@@ -42,7 +41,6 @@ function App() {
         <Route path='/auth/callback' element={<AuthCallbackPage />} />
         <Route path='/auth/verify-email' element={<VerifyEmailPage />} />
         <Route path='/dashboard' element={<Dashboard />} />
-        <Route path='/upload' element={<UploadResource />} />
         <Route path='/create-product' element={<CreateProductPage />} />
         <Route path='/edit-product/:productId' element={<EditProductPage />} />
         <Route path='/library' element={<MyLibrary />} />

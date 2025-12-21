@@ -4,38 +4,14 @@ import { useAuth } from "@/hooks/auth/use-auth";
 import NavBar from "./NavBar";
 import { toast } from "sonner";
 import { getAccessToken } from "@/lib/api/client";
+import { 
+    Zap, Package, Check, X, Plus, Image as ImageIcon, 
+    Video, Type, DollarSign, Tag, Info, Layout
+} from "lucide-react";
 
 const CATEGORIES = ["Design", "Code", "Templates", "E-commerce", "Icons", "Photography", "Productivity", "Education"];
 const SHORT_DESC_LIMIT = 200;
 const LONG_DESC_LIMIT = 5000;
-
-const PAGE_COLORS = [
-  { name: "White", value: "#ffffff" },
-  { name: "Cream", value: "#fffbeb" },
-  { name: "Pink", value: "#fdf2f8" },
-  { name: "Mint", value: "#ecfdf5" },
-  { name: "Sky", value: "#f0f9ff" },
-  { name: "Lavender", value: "#faf5ff" },
-  { name: "Peach", value: "#fff7ed" },
-  { name: "Gray", value: "#f9fafb" },
-];
-
-function renderMarkdown(text) {
-  if (!text) return "";
-  let html = text
-    .replace(/^### (.+)$/gm, "<h3 class='text-base font-semibold mt-3 mb-1'>$1</h3>")
-    .replace(/^## (.+)$/gm, "<h2 class='text-lg font-semibold mt-4 mb-2'>$1</h2>")
-    .replace(/^# (.+)$/gm, "<h1 class='text-xl font-bold mt-5 mb-2'>$1</h1>")
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    .replace(/`(.+?)`/g, "<code class='px-1 py-0.5 bg-slate-100 rounded text-xs font-mono'>$1</code>")
-    .replace(/^- (.+)$/gm, "<li class='ml-4 list-disc'>$1</li>")
-    .replace(/^\d+\. (.+)$/gm, "<li class='ml-4 list-decimal'>$1</li>")
-    .replace(/\[(.+?)\]\((.+?)\)/g, "<a href='$2' class='text-slate-900 underline' target='_blank'>$1</a>")
-    .replace(/\n\n/g, "</p><p class='mb-2'>")
-    .replace(/\n/g, "<br/>");
-  return `<p class='mb-2'>${html}</p>`;
-}
 
 export default function CreateProductPage() {
   const navigate = useNavigate();
@@ -61,7 +37,6 @@ export default function CreateProductPage() {
   const [thumbnail, setThumbnail] = useState(null);
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
   const [previewImagePreviews, setPreviewImagePreviews] = useState([]);
-  const [showLongDescPreview, setShowLongDescPreview] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -110,36 +85,16 @@ export default function CreateProductPage() {
     }));
   };
 
-  const insertMarkdown = (field, syntax) => {
-    setForm(prev => ({ ...prev, [field]: prev[field] + syntax }));
-  };
-
-  const updateVideoLink = (index, value) => {
-    setForm(prev => {
-      const videos = [...prev.preview_videos];
-      videos[index] = value;
-      return { ...prev, preview_videos: videos };
-    });
-  };
-
-  const addVideoLink = () => {
-    setForm(prev => ({ ...prev, preview_videos: [...prev.preview_videos, ""] }));
-  };
-
-  const removeVideoLink = (index) => {
-    setForm(prev => ({ ...prev, preview_videos: prev.preview_videos.filter((_, i) => i !== index) }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!form.name || !form.price || form.categories.length === 0) {
-      toast.error("Please fill in all required fields");
+      toast.error("MISSING_CRITICAL_FIELDS");
       return;
     }
 
     if (files.length === 0) {
-      toast.error("Please upload at least one file");
+      toast.error("ATTACH_FILE_ASSETS_REQUIRED");
       return;
     }
 
@@ -172,449 +127,297 @@ export default function CreateProductPage() {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success("Product created successfully!");
+        toast.success("TRANSMISSION_COMPLETE: Asset Launched");
         navigate(`/product/${data.product.id}`);
       } else {
-        toast.error(data.error?.message || "Failed to create product");
+        toast.error(data.error?.message || "TRANSMISSION_FAILED");
       }
     } catch {
-      toast.error("An error occurred. Please try again.");
+      toast.error("SYSTEM_OVERLOAD: Try again");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#fafafa] text-black font-sans selection:bg-black selection:text-white">
       <NavBar />
 
-      <main className="pt-24 pb-20">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="mb-8">
-            <h1 className="font-display text-4xl mb-2">Create Product</h1>
-            <p className="text-slate-500">Upload files, set price, and start selling</p>
-          </div>
+      <main className="pt-32 pb-40 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <header className="mb-20 border-b-8 border-black pb-12 relative">
+            <div className="absolute -top-10 -left-6 px-6 py-2 bg-black text-white border-4 border-black -rotate-6 text-xs font-black uppercase tracking-widest italic">Module: UplInk</div>
+            <h1 className="text-8xl md:text-[8rem] font-black uppercase tracking-tighter leading-none mb-4">
+                LAUNCH <br/> ASSET
+            </h1>
+            <p className="text-3xl font-bold bg-[var(--yellow-400)] border-4 border-black px-6 py-2 inline-block shadow-[8px_8px_0px_rgba(0,0,0,1)]">
+                Deploy your digital data to the Bay.
+            </p>
+        </header>
 
-          <form onSubmit={handleSubmit}>
-            <div className="grid lg:grid-cols-5 gap-8">
-              <div className="lg:col-span-3 space-y-6">
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                  <h2 className="font-semibold mb-4 flex items-center gap-2">
-                    <span className="w-6 h-6 bg-slate-900 rounded-full flex items-center justify-center text-white text-xs">1</span>
-                    Product Details
-                  </h2>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Product Name *</label>
-                      <input
-                        type="text"
-                        value={form.name}
+        <form onSubmit={handleSubmit} className="grid lg:grid-cols-12 gap-16">
+          <div className="lg:col-span-8 space-y-20">
+            {/* Section 1: Identity */}
+            <section className="bg-white border-8 border-black p-12 shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] relative">
+                <div className="absolute -left-12 top-10 w-24 h-8 bg-black text-white border-4 border-black flex items-center justify-center font-black text-xs uppercase -rotate-90">ID_DATA</div>
+                <FormHeading icon={<Type />} title="Asset Identity" />
+                
+                <div className="space-y-10">
+                    <InputField 
+                        label="Asset Specification [Name]" 
+                        value={form.name} 
                         onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                        placeholder="e.g., Premium UI Kit for Figma"
-                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition-all"
+                        placeholder="e.g., NEURAL_GRID_UI_KIT"
                         required
-                      />
-                    </div>
+                    />
 
                     <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-sm font-medium text-slate-700">Short Description</label>
-                        <span className={`text-xs ${form.short_description.length > SHORT_DESC_LIMIT * 0.9 ? "text-pink-500 font-medium" : "text-slate-400"}`}>
-                          {form.short_description.length}/{SHORT_DESC_LIMIT}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-400 mb-2">Brief summary for product cards</p>
-                      <textarea
-                        value={form.short_description}
-                        onChange={e => setForm(p => ({ ...p, short_description: e.target.value.slice(0, SHORT_DESC_LIMIT) }))}
-                        placeholder="A brief tagline for your product..."
-                        rows={2}
-                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition-all resize-none"
-                      />
-                    </div>
-
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-sm font-medium text-slate-700">Long Description</label>
-                        <span className={`text-xs ${form.long_description.length > LONG_DESC_LIMIT * 0.9 ? "text-pink-500 font-medium" : "text-slate-400"}`}>
-                          {form.long_description.length}/{LONG_DESC_LIMIT}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-400 mb-2">Detailed description with markdown support</p>
-                      <div className="border border-slate-200 rounded-xl overflow-hidden">
-                        <div className="flex items-center gap-1 px-3 py-2 bg-slate-50 border-b border-slate-200">
-                          <button type="button" onClick={() => insertMarkdown("long_description", "**bold**")} className="px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors">B</button>
-                          <button type="button" onClick={() => insertMarkdown("long_description", "*italic*")} className="px-2 py-1 text-xs italic hover:bg-white rounded transition-colors">I</button>
-                          <button type="button" onClick={() => insertMarkdown("long_description", "`code`")} className="px-2 py-1 text-xs font-mono hover:bg-white rounded transition-colors">&lt;&gt;</button>
-                          <button type="button" onClick={() => insertMarkdown("long_description", "\n- ")} className="px-2 py-1 text-xs hover:bg-white rounded transition-colors">List</button>
-                          <button type="button" onClick={() => insertMarkdown("long_description", "\n## ")} className="px-2 py-1 text-xs font-bold hover:bg-white rounded transition-colors">H2</button>
-                          <button type="button" onClick={() => insertMarkdown("long_description", "[text](url)")} className="px-2 py-1 text-xs hover:bg-white rounded transition-colors">Link</button>
-                          <div className="ml-auto">
-                            <button type="button" onClick={() => setShowLongDescPreview(!showLongDescPreview)} className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${showLongDescPreview ? "bg-slate-900 text-white" : "hover:bg-white"}`}>
-                              {showLongDescPreview ? "Edit" : "Preview"}
-                            </button>
-                          </div>
+                        <div className="flex justify-between items-center mb-4">
+                            <label className="text-xs font-black uppercase tracking-widest text-slate-400">Brief_Intel [Short Description]</label>
+                            <span className="text-[10px] font-bold">{form.short_description.length}/{SHORT_DESC_LIMIT}</span>
                         </div>
-                        {showLongDescPreview ? (
-                          <div className="px-4 py-3 min-h-[180px] text-sm text-slate-600 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: renderMarkdown(form.long_description) || "<p class='text-slate-400'>Nothing to preview...</p>" }} />
-                        ) : (
-                          <textarea
+                        <textarea
+                            value={form.short_description}
+                            onChange={e => setForm(p => ({ ...p, short_description: e.target.value.slice(0, SHORT_DESC_LIMIT) }))}
+                            className="w-full p-6 border-8 border-black font-bold focus:bg-[var(--yellow-50)] outline-none min-h-[120px] transition-all"
+                            placeholder="State the core function of this asset..."
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-4 text-left">Full_Spectrum_Log [Detailed Description]</label>
+                        <textarea
                             value={form.long_description}
-                            onChange={e => setForm(p => ({ ...p, long_description: e.target.value.slice(0, LONG_DESC_LIMIT) }))}
-                            placeholder="Describe what's included, features, requirements..."
-                            rows={8}
-                            className="w-full px-4 py-3 bg-white focus:outline-none resize-none text-sm"
-                          />
-                        )}
-                      </div>
+                            onChange={e => setForm(p => ({ ...p, long_description: e.target.value }))}
+                            rows={10}
+                            className="w-full p-6 border-8 border-black font-bold focus:bg-[var(--yellow-50)] outline-none transition-all font-mono text-sm"
+                            placeholder="Initialize markdown stream: ## Features, ### Components..."
+                        />
                     </div>
+                </div>
+            </section>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Price *</label>
+            {/* Section 2: Economy */}
+            <section className="bg-white border-8 border-black p-12 shadow-[20px_20px_0px_0px_rgba(255,0,255,0.2)] relative">
+                <div className="absolute -left-12 top-10 w-24 h-8 bg-[var(--pink-500)] text-white border-4 border-black flex items-center justify-center font-black text-xs uppercase -rotate-90 shadow-[4px_0px_0px_black]">ECON_VAL</div>
+                <FormHeading icon={<DollarSign />} title="Economic Value" />
+                
+                <div className="grid md:grid-cols-2 gap-10">
+                    <div>
+                        <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Unit_Price</label>
                         <div className="relative">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-slate-600">
-                            {form.currency === "INR" ? "₹" : "$"}
-                          </span>
-                          <input
-                            type="number"
-                            min="0"
-                            step="1"
-                            value={form.price}
-                            onChange={e => setForm(p => ({ ...p, price: e.target.value }))}
-                            placeholder="499"
-                            className="w-full pl-10 pr-4 py-3 font-semibold text-lg bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition-all"
-                            required
-                          />
+                            <span className="absolute left-6 top-1/2 -translate-y-1/2 text-4xl font-black italic">{form.currency === 'INR' ? '₹' : '$'}</span>
+                            <input
+                                type="number"
+                                value={form.price}
+                                onChange={e => setForm(p => ({ ...p, price: e.target.value }))}
+                                className="w-full pl-16 pr-8 py-6 border-8 border-black text-5xl font-black italic outline-none focus:bg-[var(--green-400)] transition-all"
+                                placeholder="0"
+                                required
+                            />
                         </div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Currency_Node</label>
                         <select
-                          value={form.currency}
-                          onChange={e => setForm(p => ({ ...p, currency: e.target.value }))}
-                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none cursor-pointer"
+                            value={form.currency}
+                            onChange={e => setForm(p => ({ ...p, currency: e.target.value }))}
+                            className="w-full p-6 border-8 border-black font-black uppercase text-2xl outline-none focus:bg-[var(--cyan-400)] appearance-none"
                         >
-                          <option value="INR">INR (₹)</option>
-                          <option value="USD">USD ($)</option>
+                            <option value="INR">INR [₹]</option>
+                            <option value="USD">USD [$]</option>
                         </select>
-                      </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Section 3: Taxonomy */}
+            <section className="bg-white border-8 border-black p-12 shadow-[20px_20px_0px_0px_rgba(0,255,255,0.2)] relative">
+                <div className="absolute -left-12 top-10 w-24 h-8 bg-[var(--cyan-400)] text-black border-4 border-black flex items-center justify-center font-black text-xs uppercase -rotate-90 shadow-[4px_0px_0px_black]">CL4SS_TAG</div>
+                <FormHeading icon={<Tag />} title="Classification" />
+                
+                <div className="space-y-12">
+                    <div>
+                        <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-6">Asset_Sectors [Categories]</label>
+                        <div className="flex flex-wrap gap-4">
+                            {CATEGORIES.map(cat => (
+                                <button
+                                    key={cat}
+                                    type="button"
+                                    onClick={() => toggleCategory(cat)}
+                                    className={`px-6 py-3 border-4 border-black font-black uppercase italic transition-all ${
+                                        form.categories.includes(cat)
+                                            ? "bg-black text-white -translate-y-1 shadow-[4px_4px_0px_rgba(0,0,0,0.3)]"
+                                            : "bg-white text-black hover:bg-[var(--yellow-400)]"
+                                    }`}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">Categories *</label>
-                      <div className="flex flex-wrap gap-2">
-                        {CATEGORIES.map(cat => (
-                          <button
-                            key={cat}
-                            type="button"
-                            onClick={() => toggleCategory(cat)}
-                            className={`px-3 py-2 text-sm font-medium rounded-full transition-all ${
-                              form.categories.includes(cat)
-                                ? "bg-slate-900 text-white"
-                                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                            }`}
-                          >
-                            {cat}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Tags (comma separated)</label>
-                      <input
-                        type="text"
+                    <InputField 
+                        label="Meta_Tags [Comma Separated]" 
                         value={form.tags}
                         onChange={e => setForm(p => ({ ...p, tags: e.target.value }))}
-                        placeholder="e.g., figma, ui-kit, design-system"
-                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition-all"
-                      />
-                    </div>
-                  </div>
+                        placeholder="figma, ai, neural, grid"
+                    />
                 </div>
+            </section>
 
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                  <h2 className="font-semibold mb-4 flex items-center gap-2">
-                    <span className="w-6 h-6 bg-slate-900 rounded-full flex items-center justify-center text-white text-xs">2</span>
-                    Files & Media
-                  </h2>
+            {/* Section 4: Payload */}
+            <section className="bg-black text-white border-8 border-black p-12 shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--yellow-400)] border-l-8 border-b-8 border-white translate-x-12 -translate-y-12 rotate-45" />
+                <FormHeading icon={<Package className="text-[var(--yellow-400)]" />} title="Primary Payload" />
+                
+                <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-8 border-dashed border-white/20 p-16 text-center cursor-pointer hover:border-white transition-colors bg-white/5"
+                >
+                    <Zap size={64} className="mx-auto mb-6 text-[var(--yellow-400)] animate-pulse" strokeWidth={3} />
+                    <p className="text-4xl font-black uppercase italic tracking-tighter leading-none mb-2">Engage UplInk</p>
+                    <p className="text-xs font-bold uppercase text-white/40">Select files or drag and drop [Max 50MB per node]</p>
+                </div>
+                <input ref={fileInputRef} type="file" multiple onChange={handleFileSelect} className="hidden" />
 
-                  <div className="space-y-5">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">Cover Image</label>
-                      <div 
-                        onClick={() => thumbnailInputRef.current?.click()}
-                        className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center cursor-pointer hover:border-slate-300 hover:bg-slate-50 transition-colors"
-                      >
-                        {thumbnailPreview ? (
-                          <div className="relative inline-block">
-                            <img src={thumbnailPreview} alt="Thumbnail" className="max-h-40 mx-auto rounded-lg" />
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); setThumbnail(null); setThumbnailPreview(null); }}
-                              className="absolute -top-2 -right-2 w-6 h-6 bg-slate-900 text-white rounded-full text-xs flex items-center justify-center hover:bg-slate-700"
-                            >
-                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                            </button>
-                          </div>
-                        ) : (
-                          <>
-                            <svg className="w-10 h-10 mx-auto mb-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                            </svg>
-                            <p className="text-sm font-medium text-slate-600">Click to upload cover image</p>
-                            <p className="text-xs text-slate-400 mt-1">PNG, JPG up to 5MB</p>
-                          </>
-                        )}
-                      </div>
-                      <input ref={thumbnailInputRef} type="file" accept="image/*" onChange={handleThumbnailSelect} className="hidden" />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">Product Files *</label>
-                      <div 
-                        onClick={() => fileInputRef.current?.click()}
-                        className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center cursor-pointer hover:border-slate-300 hover:bg-slate-50 transition-colors"
-                      >
-                        <svg className="w-10 h-10 mx-auto mb-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                        </svg>
-                        <p className="text-sm font-medium text-slate-600">Click to upload files</p>
-                        <p className="text-xs text-slate-400 mt-1">ZIP, PDF, or any file type</p>
-                      </div>
-                      <input ref={fileInputRef} type="file" multiple onChange={handleFileSelect} className="hidden" />
-
-                      {files.length > 0 && (
-                        <div className="mt-3 space-y-2 max-h-40 overflow-y-auto">
-                          {files.map((file, i) => (
-                            <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                              <div className="flex items-center gap-3 min-w-0">
-                                <svg className="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                                </svg>
-                                <div className="min-w-0">
-                                  <p className="text-sm font-medium text-slate-700 truncate">{file.name}</p>
-                                  <p className="text-xs text-slate-400">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                {files.length > 0 && (
+                    <div className="mt-10 grid gap-4">
+                        {files.map((file, i) => (
+                            <div key={i} className="flex items-center justify-between p-6 bg-white/10 border-4 border-white group">
+                                <div className="flex items-center gap-6">
+                                    <div className="w-12 h-12 bg-[var(--yellow-400)] text-black flex items-center justify-center font-black text-xs">BIN</div>
+                                    <div>
+                                        <p className="font-black uppercase italic leading-none">{file.name}</p>
+                                        <p className="text-[10px] uppercase text-white/40 mt-1">Weight: {(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                                    </div>
                                 </div>
-                              </div>
-                              <button type="button" onClick={() => removeFile(i)} className="p-1 hover:bg-slate-200 rounded transition-colors flex-shrink-0">
-                                <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                              </button>
+                                <button type="button" onClick={() => removeFile(i)} className="p-3 hover:bg-red-600 transition-colors">
+                                    <X size={20} strokeWidth={4} />
+                                </button>
                             </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                  <h2 className="font-semibold mb-4 flex items-center gap-2">
-                    <span className="w-6 h-6 bg-slate-900 rounded-full flex items-center justify-center text-white text-xs">3</span>
-                    Preview & Proof
-                  </h2>
-                  <p className="text-sm text-slate-500 mb-4">Add images and videos to showcase your product</p>
-
-                  <div className="space-y-5">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">Preview Images</label>
-                      <div 
-                        onClick={() => previewImageInputRef.current?.click()}
-                        className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center cursor-pointer hover:border-slate-300 hover:bg-slate-50 transition-colors"
-                      >
-                        <svg className="w-8 h-8 mx-auto mb-1 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
-                        </svg>
-                        <p className="text-sm text-slate-500">Add screenshots or preview images</p>
-                      </div>
-                      <input ref={previewImageInputRef} type="file" accept="image/*" multiple onChange={handlePreviewImageSelect} className="hidden" />
-
-                      {previewImagePreviews.length > 0 && (
-                        <div className="mt-3 grid grid-cols-3 gap-2">
-                          {previewImagePreviews.map((img, i) => (
-                            <div key={i} className="relative aspect-video rounded-lg overflow-hidden bg-slate-100">
-                              <img src={img} alt="" className="w-full h-full object-cover" />
-                              <button type="button" onClick={() => removePreviewImage(i)} className="absolute top-1 right-1 w-5 h-5 bg-black/60 text-white rounded-full text-xs flex items-center justify-center hover:bg-black/80">
-                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">Video Links</label>
-                      <p className="text-xs text-slate-400 mb-2">YouTube or Vimeo links</p>
-                      <div className="space-y-2">
-                        {form.preview_videos.map((video, i) => (
-                          <div key={i} className="flex gap-2">
-                            <input
-                              type="url"
-                              value={video}
-                              onChange={e => updateVideoLink(i, e.target.value)}
-                              placeholder="https://youtube.com/watch?v=..."
-                              className="flex-1 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/10"
-                            />
-                            {form.preview_videos.length > 1 && (
-                              <button type="button" onClick={() => removeVideoLink(i)} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                                <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                              </button>
-                            )}
-                          </div>
                         ))}
-                        <button type="button" onClick={addVideoLink} className="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1">
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                          Add another video
-                        </button>
-                      </div>
                     </div>
-                  </div>
-                </div>
+                )}
+            </section>
+          </div>
 
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                  <h2 className="font-semibold mb-4 flex items-center gap-2">
-                    <span className="w-6 h-6 bg-slate-900 rounded-full flex items-center justify-center text-white text-xs">4</span>
-                    Page Customization
-                  </h2>
-                  <p className="text-sm text-slate-500 mb-4">Choose a background color for your product page</p>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-3">Page Background Color</label>
-                    <div className="flex flex-wrap gap-3">
-                      {PAGE_COLORS.map(color => (
-                        <button
-                          key={color.value}
-                          type="button"
-                          onClick={() => setForm(p => ({ ...p, page_color: color.value }))}
-                          className={`w-12 h-12 rounded-xl border-2 transition-all ${
-                            form.page_color === color.value 
-                              ? "border-black shadow-[3px_3px_0px_var(--black)] scale-110" 
-                              : "border-slate-200 hover:border-slate-400"
-                          }`}
-                          style={{ backgroundColor: color.value }}
-                          title={color.name}
-                        />
-                      ))}
-                      <div className="relative">
-                        <input
-                          type="color"
-                          value={form.page_color}
-                          onChange={e => setForm(p => ({ ...p, page_color: e.target.value }))}
-                          className="absolute inset-0 w-12 h-12 opacity-0 cursor-pointer"
-                        />
-                        <div 
-                          className="w-12 h-12 rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center hover:border-slate-400 transition-colors"
-                          style={{ backgroundColor: !PAGE_COLORS.find(c => c.value === form.page_color) ? form.page_color : 'transparent' }}
-                        >
-                          <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-xs text-slate-400 mt-2">Click the + to pick a custom color</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="lg:col-span-2">
-                <div className="sticky top-24 space-y-6">
-                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                    <h3 className="font-semibold mb-4">Preview</h3>
+          {/* RIGHT SIDEBAR: Visuals & Deploy */}
+          <div className="lg:col-span-4 space-y-12">
+            <div className="sticky top-32 space-y-12">
+                {/* Visual Registry */}
+                <section className="bg-white border-8 border-black p-10 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+                    <FormHeading icon={<ImageIcon />} title="Visual Registry" />
                     
-                    <div className="rounded-xl border border-slate-200 overflow-hidden mb-4">
-                      <div className="aspect-[16/10] bg-slate-100 flex items-center justify-center overflow-hidden">
-                        {thumbnailPreview ? (
-                          <img src={thumbnailPreview} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <svg className="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                          </svg>
-                        )}
-                      </div>
-                      <div className="p-4">
-                        <h4 className="font-semibold mb-1 truncate">{form.name || "Product Name"}</h4>
-                        <p className="text-sm text-slate-500 line-clamp-2 mb-3">{form.short_description || "Short description..."}</p>
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-lg">
-                            {form.currency === "INR" ? "₹" : "$"}{form.price || "0"}
-                          </span>
-                          <div className="flex gap-1">
-                            {form.categories.slice(0, 2).map((cat, i) => (
-                              <span key={i} className="px-2 py-0.5 text-xs font-medium bg-slate-100 rounded-full">
-                                {cat}
-                              </span>
-                            ))}
-                          </div>
+                    <div className="space-y-10">
+                        <div>
+                            <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Core_Thumbnail</label>
+                            <div 
+                                onClick={() => thumbnailInputRef.current?.click()}
+                                className="aspect-video border-8 border-black bg-slate-100 flex items-center justify-center cursor-pointer overflow-hidden relative group"
+                            >
+                                {thumbnailPreview ? (
+                                    <img src={thumbnailPreview} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                ) : (
+                                    <div className="text-center p-6">
+                                        <Plus size={48} className="mx-auto text-slate-300 mb-2" strokeWidth={4} />
+                                        <p className="text-[10px] font-black uppercase text-slate-300">Upload Cover</p>
+                                    </div>
+                                )}
+                                {thumbnailPreview && (
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <p className="text-white font-black uppercase text-xs">Replace Asset</p>
+                                    </div>
+                                )}
+                            </div>
+                            <input ref={thumbnailInputRef} type="file" accept="image/*" onChange={handleThumbnailSelect} className="hidden" />
                         </div>
-                      </div>
-                    </div>
 
-                    <div className="space-y-2 text-sm mb-4">
-                      <div className="flex justify-between text-slate-500">
-                        <span>Files</span>
-                        <span className="font-medium text-slate-700">{files.length}</span>
-                      </div>
-                      <div className="flex justify-between text-slate-500">
-                        <span>Categories</span>
-                        <span className="font-medium text-slate-700">{form.categories.length}</span>
-                      </div>
-                      <div className="flex justify-between text-slate-500">
-                        <span>Preview Images</span>
-                        <span className="font-medium text-slate-700">{form.preview_images.length}</span>
-                      </div>
+                        <div>
+                            <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Preview_Snapshots</label>
+                            <div className="grid grid-cols-2 gap-4">
+                                {previewImagePreviews.map((img, i) => (
+                                    <div key={i} className="aspect-square border-4 border-black bg-slate-100 relative group">
+                                        <img src={img} className="w-full h-full object-cover" />
+                                        <button type="button" onClick={() => removePreviewImage(i)} className="absolute top-1 right-1 bg-black text-white p-1 hover:bg-red-600 transition-colors">
+                                            <X size={12} strokeWidth={4} />
+                                        </button>
+                                    </div>
+                                ))}
+                                <button 
+                                    type="button" 
+                                    onClick={() => previewImageInputRef.current?.click()}
+                                    className="aspect-square border-4 border-dashed border-slate-200 flex flex-col items-center justify-center hover:border-black hover:bg-[var(--cyan-50)] transition-all"
+                                >
+                                    <Plus size={24} className="text-slate-300" />
+                                    <p className="text-[8px] font-black uppercase text-slate-300">Add Slot</p>
+                                </button>
+                            </div>
+                            <input ref={previewImageInputRef} type="file" accept="image/*" multiple onChange={handlePreviewImageSelect} className="hidden" />
+                        </div>
+                    </div>
+                </section>
+
+                {/* Final Deploy */}
+                <div className="space-y-6">
+                    <div className="p-8 border-8 border-black bg-[var(--yellow-400)] shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] flex items-center gap-6">
+                        <Info size={32} strokeWidth={4} className="flex-shrink-0" />
+                        <p className="text-xs font-bold uppercase leading-tight italic">By deploying this asset, you confirm it adheres to the protocol terms of ownership and safety.</p>
                     </div>
 
                     <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full py-4 font-medium rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        type="submit"
+                        disabled={loading}
+                        className="w-full py-10 bg-black text-white border-8 border-black font-black uppercase text-4xl italic tracking-tighter hover:bg-[var(--pink-500)] hover:shadow-[16px_16px_0px_0px_rgba(255,214,0,1)] transition-all shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] active:translate-x-2 active:translate-y-2 active:shadow-none disabled:opacity-50"
                     >
-                      {loading ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                          </svg>
-                          Publishing...
-                        </span>
-                      ) : (
-                        "Publish Product"
-                      )}
+                        {loading ? (
+                            <span className="flex items-center justify-center gap-6">
+                                <Zap className="animate-spin text-[var(--yellow-400)]" size={40} />
+                                DEPLOYING...
+                            </span>
+                        ) : (
+                            "LAUNCH ASSET"
+                        )}
                     </button>
-                  </div>
 
-                  <div className="bg-slate-50 rounded-2xl border border-slate-200 p-6">
-                    <h3 className="font-medium mb-3">Tips for Success</h3>
-                    <ul className="space-y-2 text-sm text-slate-600">
-                      <li className="flex items-start gap-2">
-                        <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                        Use a clear, descriptive title
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                        Add an eye-catching cover image
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                        Include preview images or video
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                        Write detailed description
-                      </li>
-                    </ul>
-                  </div>
+                    <button
+                        type="button"
+                        onClick={() => navigate(-1)}
+                        className="w-full py-4 bg-white border-8 border-black font-black uppercase text-xl italic hover:bg-slate-50 transition-all"
+                    >
+                        Abort Mission
+                    </button>
                 </div>
-              </div>
             </div>
-          </form>
-        </div>
+          </div>
+        </form>
       </main>
     </div>
   );
+}
+
+function FormHeading({ icon, title }) {
+    return (
+        <div className="flex items-center gap-6 mb-12 mb-12">
+            <div className="w-16 h-16 border-8 border-black bg-black text-white flex items-center justify-center font-black">
+                {icon}
+            </div>
+            <h2 className="text-5xl font-black uppercase italic tracking-tighter">{title}</h2>
+        </div>
+    );
+}
+
+function InputField({ label, value, onChange, placeholder, required }) {
+    return (
+        <div>
+            <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-4">{label}</label>
+            <input
+                type="text"
+                value={value}
+                onChange={onChange}
+                className="w-full p-6 border-8 border-black font-black uppercase text-2xl outline-none focus:bg-[var(--yellow-400)] transition-all"
+                placeholder={placeholder}
+                required={required}
+            />
+        </div>
+    );
 }

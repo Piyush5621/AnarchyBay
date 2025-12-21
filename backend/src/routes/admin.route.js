@@ -51,14 +51,44 @@ router.get("/users", requireAuth, requireRole('admin'), async (req, res) => {
     const { page = 1, limit = 20 } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
     
+    // Fetch users
     const { data: users, count } = await supabase
       .from('profiles')
       .select('*', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(offset, offset + parseInt(limit) - 1);
 
-    return res.json({ users, total: count, page: parseInt(page), limit: parseInt(limit) });
+    // Fetch earnings for these users
+    const userIds = users.map(u => u.id);
+    
+    // Total sales and revenue per creator
+    const { data: earningsData } = await supabase
+      .from('purchases')
+      .select('amount, platform_fee, creator_earnings, products(creator_id)')
+      .in('products.creator_id', userIds)
+      .eq('status', 'completed');
+
+    // Group earnings by creator
+    const earningsMap = {};
+    earningsData?.forEach(p => {
+      const creatorId = p.products?.creator_id;
+      if (!earningsMap[creatorId]) {
+        earningsMap[creatorId] = { totalSales: 0, totalEarnings: 0, salesCount: 0 };
+      }
+      earningsMap[creatorId].totalSales += parseFloat(p.amount);
+      earningsMap[creatorId].totalEarnings += parseFloat(p.creator_earnings);
+      earningsMap[creatorId].salesCount += 1;
+    });
+
+    // Merge earnings back to users
+    const usersWithEarnings = users.map(user => ({
+      ...user,
+      stats: earningsMap[user.id] || { totalSales: 0, totalEarnings: 0, salesCount: 0 }
+    }));
+
+    return res.json({ users: usersWithEarnings, total: count, page: parseInt(page), limit: parseInt(limit) });
   } catch (error) {
+    console.error('Fetch users error:', error);
     return res.status(500).json({ error: 'Failed to fetch users' });
   }
 });
