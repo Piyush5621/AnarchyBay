@@ -72,33 +72,11 @@ export default function ProductPage() {
 
   // --- LOGIC: Fetch Data & Check Status ---
   useEffect(() => {
-    const checkUserPurchase = async () => {
-      if (isAuthenticated && productId) {
-        try {
-          const token = getAccessToken();
-          const res = await fetch(`${API_URL}/api/purchases/check/${productId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          const data = await res.json();
-          if (data.hasPurchased) {
-            setHasPurchased(true);
-            setPurchaseData(data.purchase);
-          }
-        } catch (err) {
-          console.error("Error checking purchase:", err);
-        } finally {
-          setCheckingPurchase(false);
-        }
-      } else {
-        setCheckingPurchase(false);
-      }
-    };
-
-    checkUserPurchase();
-  }, [productId, isAuthenticated]);
+    if (authLoading) return;
 
     const fetchAllData = async () => {
       try {
+        setDataLoading(true);
         // 1. Fetch Public Product Data
         const res = await fetch(`${API_URL}/api/products/${productId}`);
         const data = await res.json();
@@ -241,7 +219,7 @@ export default function ProductPage() {
               toast.success("Payment successful!");
               navigate(`/checkout/success?purchase_id=${verifyData.purchase.id}`);
             } else {
-              const errorData = await verifyRes.json();
+              const errorData = await verifyRes.json(); // Capture backend error
               console.error("Verification failed:", errorData);
               toast.error("Payment verification failed");
             }
