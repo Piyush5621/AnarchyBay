@@ -8,7 +8,7 @@ import { useRazorpay } from "react-razorpay";
 import { 
   Star, ShoppingBag, Heart, Share2, ArrowLeft, 
   Check, Download, Package, Clock, Shield, 
-  ExternalLink, MessageSquare, Plus, X, Globe, Zap, FileText
+  ExternalLink, MessageSquare, Plus, X, Globe, Zap, FileText, Flag
 } from "lucide-react";
 
 const COMMENT_CHAR_LIMIT = 500;
@@ -91,6 +91,10 @@ export default function ProductPage() {
   const [appliedDiscount, setAppliedDiscount] = useState(null);
   const [validatingCoupon, setValidatingCoupon] = useState(false);
   const [showCouponInput, setShowCouponInput] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
+  const [submittingReport, setSubmittingReport] = useState(false);
 
   const { Razorpay } = useRazorpay();
 
@@ -107,6 +111,50 @@ export default function ProductPage() {
     } else if (platform === "copy") {
       navigator.clipboard.writeText(url);
       toast.success("Link copied to clipboard!");
+    }
+  };
+
+  // Report handler
+  const handleSubmitReport = async (e) => {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      toast.error("Please sign in to report products");
+      navigate("/login");
+      return;
+    }
+    if (!reportReason) {
+      toast.error("Please select a reason");
+      return;
+    }
+    
+    setSubmittingReport(true);
+    try {
+      const token = getAccessToken();
+      const res = await fetch(`${API_URL}/api/products/${productId}/report`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          reason: reportReason,
+          description: reportDescription,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("Report submitted successfully. Thank you for helping keep our marketplace safe!");
+        setShowReportModal(false);
+        setReportReason('');
+        setReportDescription('');
+      } else {
+        toast.error(data.error || "Failed to submit report");
+      }
+    } catch (err) {
+      toast.error("Failed to submit report");
+    } finally {
+      setSubmittingReport(false);
     }
   };
 
@@ -714,29 +762,40 @@ export default function ProductPage() {
                         </div>
                     </div>
 
-                    <div className="mt-6 flex items-center gap-4">
-                        <button
-                            onClick={handleAddToWishlist}
-                            className={`flex-1 py-2.5 rounded-lg border transition-all flex items-center justify-center gap-2 ${inWishlist ? "border-pink-500 text-pink-500 bg-pink-50" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}
-                        >
-                            <Heart size={16} fill={inWishlist ? "currentColor" : "none"} />
-                            <span className="text-sm font-medium">{inWishlist ? "Saved" : "Save"}</span>
-                        </button>
-                        <div className="relative">
-                            <button 
-                                onClick={() => setShowShareMenu(!showShareMenu)} 
-                                className="p-2.5 border border-gray-200 rounded-lg hover:border-gray-300 transition-all"
+                    <div className="mt-6 space-y-3">
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={handleAddToWishlist}
+                                className={`flex-1 py-2.5 rounded-lg border transition-all flex items-center justify-center gap-2 ${inWishlist ? "border-pink-500 text-pink-500 bg-pink-50" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}
                             >
-                                <Share2 size={18} className="text-gray-600" />
+                                <Heart size={16} fill={inWishlist ? "currentColor" : "none"} />
+                                <span className="text-sm font-medium">{inWishlist ? "Saved" : "Save"}</span>
                             </button>
-                            {showShareMenu && (
-                                <div className="absolute right-0 bottom-full mb-2 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 min-w-[140px]">
-                                    {['Twitter', 'Facebook', 'LinkedIn', 'Copy'].map((item) => (
-                                        <button key={item} onClick={() => handleShare(item.toLowerCase())} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors">{item}</button>
-                                    ))}
-                                </div>
-                            )}
+                            <div className="relative">
+                                <button 
+                                    onClick={() => setShowShareMenu(!showShareMenu)} 
+                                    className="p-2.5 border border-gray-200 rounded-lg hover:border-gray-300 transition-all"
+                                >
+                                    <Share2 size={18} className="text-gray-600" />
+                                </button>
+                                {showShareMenu && (
+                                    <div className="absolute right-0 bottom-full mb-2 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 min-w-[140px]">
+                                        {['Twitter', 'Facebook', 'LinkedIn', 'Copy'].map((item) => (
+                                            <button key={item} onClick={() => handleShare(item.toLowerCase())} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors">{item}</button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
+                        {!isCreator && (
+                          <button 
+                              onClick={() => setShowReportModal(true)} 
+                              className="w-full py-2.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-all flex items-center justify-center gap-2 font-medium text-sm"
+                          >
+                              <Flag size={16} />
+                              Report Product
+                          </button>
+                        )}
                     </div>
                   </div>
                </div>
@@ -784,6 +843,90 @@ export default function ProductPage() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowReportModal(false)}>
+          <div className="bg-white rounded-3xl max-w-lg w-full p-8 shadow-2xl animate-in zoom-in-95 duration-300" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
+                  <Flag size={20} className="text-red-600" />
+                </div>
+                <h2 className="text-2xl font-bold">Report Product</h2>
+              </div>
+              <button onClick={() => setShowReportModal(false)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 hover:bg-gray-200 transition-all">
+                <X size={20} />
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-600 mb-6">
+              Help us maintain a safe marketplace. Your report will be reviewed by our admin team.
+            </p>
+
+            <form onSubmit={handleSubmitReport} className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Reason for Report *</label>
+                <select
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium"
+                  required
+                >
+                  <option value="">Select a reason...</option>
+                  <option value="Copyright Violation">Copyright Violation</option>
+                  <option value="Inappropriate Content">Inappropriate Content</option>
+                  <option value="Misleading Information">Misleading Information</option>
+                  <option value="Malware or Security Risk">Malware or Security Risk</option>
+                  <option value="Poor Quality">Poor Quality</option>
+                  <option value="Scam or Fraud">Scam or Fraud</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Additional Details (Optional)</label>
+                <textarea
+                  value={reportDescription}
+                  onChange={(e) => setReportDescription(e.target.value)}
+                  placeholder="Please provide any additional information that would help us review this report..."
+                  rows={4}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium resize-none"
+                  maxLength={500}
+                />
+                <p className="text-xs text-gray-400 mt-1">{reportDescription.length}/500 characters</p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowReportModal(false)}
+                  className="flex-1 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 font-bold transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingReport || !reportReason}
+                  className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {submittingReport ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Flag size={16} />
+                      Submit Report
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

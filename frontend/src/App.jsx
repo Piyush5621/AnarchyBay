@@ -47,6 +47,7 @@ function App() {
           <Route path='/discounts' element={<DiscountsPage />} />
           <Route path='/library' element={<MyLibrary />} />
         <Route path='/profile' element={<Profile />} />
+        <Route path='/profile/:userId' element={<Profile />} />
         <Route path='/settings/profile' element={<ProfileSettings />} />
         <Route path='/cart' element={<CartPage />} />
         <Route path='/admin' element={<AdminPage />} />

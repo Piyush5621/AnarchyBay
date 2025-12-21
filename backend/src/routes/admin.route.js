@@ -1,6 +1,14 @@
 import { Router } from "express";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { supabase } from "../lib/supabase.js";
+import {
+  updateUserRolesController,
+  addRoleController,
+  removeRoleController,
+  setVerifiedSellerController,
+  toggleAdminBadgeController,
+  getAllUsersController
+} from "../controllers/admin.controller.js";
 
 const router = Router();
 
@@ -46,6 +54,25 @@ router.get("/stats", requireAuth, requireRole('admin'), async (req, res) => {
   }
 });
 
+// NEW: Get all users with roles and badges
+router.get("/users/roles", requireAuth, requireRole('admin'), getAllUsersController);
+
+// NEW: Update user roles (replace all)
+router.put("/users/:userId/roles", requireAuth, requireRole('admin'), updateUserRolesController);
+
+// NEW: Add a role to user
+router.post("/users/:userId/roles/:role", requireAuth, requireRole('admin'), addRoleController);
+
+// NEW: Remove a role from user
+router.delete("/users/:userId/roles/:role", requireAuth, requireRole('admin'), removeRoleController);
+
+// NEW: Set verified seller badge
+router.put("/users/:userId/verified-seller", requireAuth, requireRole('admin'), setVerifiedSellerController);
+
+// NEW: Toggle admin badge visibility
+router.put("/users/:userId/admin-badge", requireAuth, requireRole('admin'), toggleAdminBadgeController);
+
+// OLD: Get all users (keep for backward compatibility)
 router.get("/users", requireAuth, requireRole('admin'), async (req, res) => {
   try {
     const { page = 1, limit = 20 } = req.query;
@@ -162,6 +189,134 @@ router.delete("/products/:id", requireAuth, requireRole('admin'), async (req, re
     return res.json({ message: 'Product deactivated' });
   } catch (error) {
     return res.status(500).json({ error: 'Failed to deactivate product' });
+  }
+});
+
+// Toggle product active status
+router.put("/products/:id/toggle-active", requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const { is_active } = req.body;
+
+    const { data, error } = await supabase
+      .from('products')
+      .update({ is_active, updated_at: new Date().toISOString() })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return res.json(data);
+  } catch (error) {
+    return res.status(500).json({ error: 'Failed to toggle product status' });
+  }
+});
+
+// User account activation/deactivation
+router.put("/users/:id/toggle-active", requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const { is_active } = req.body;
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ is_active })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return res.json(data);
+  } catch (error) {
+    return res.status(500).json({ error: 'Failed to toggle user status' });
+  }
+});
+
+// User restriction
+router.put("/users/:id/restrict", requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const { is_restricted, restriction_reason } = req.body;
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ 
+        is_restricted, 
+        restriction_reason: is_restricted ? restriction_reason : null,
+        restricted_at: is_restricted ? new Date().toISOString() : null
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return res.json(data);
+  } catch (error) {
+    return res.status(500).json({ error: 'Failed to update user restriction' });
+  }
+});
+
+// Get all product reports
+router.get("/reports", requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const { status = 'pending' } = req.query;
+    
+    const query = supabase
+      .from('product_reports')
+      .select(`
+        *,
+        products(id, name, thumbnail_url, price, is_active, creator_id),
+        profiles!product_reports_reporter_id_fkey(id, name, email),
+        reviewed_by_profile:profiles!product_reports_reviewed_by_fkey(id, name, email)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (status !== 'all') {
+      query.eq('status', status);
+    }
+
+    const { data: reports, error } = await query;
+
+    if (error) throw error;
+    return res.json({ reports: reports || [] });
+  } catch (error) {
+    console.error('Fetch reports error:', error);
+    return res.status(500).json({ error: 'Failed to fetch reports' });
+  }
+});
+
+// Update report status
+router.put("/reports/:id/status", requireAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const { status, admin_notes, action } = req.body;
+    const adminId = req.user.id;
+
+    const updateData = {
+      status,
+      admin_notes,
+      reviewed_by: adminId,
+      reviewed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    const { data: report, error: reportError } = await supabase
+      .from('product_reports')
+      .update(updateData)
+      .eq('id', req.params.id)
+      .select('*, products(id)')
+      .single();
+
+    if (reportError) throw reportError;
+
+    // If admin approves the report and wants to deactivate the product
+    if (status === 'approved' && action === 'deactivate_product' && report.products) {
+      await supabase
+        .from('products')
+        .update({ is_active: false })
+        .eq('id', report.products.id);
+    }
+
+    return res.json(report);
+  } catch (error) {
+    console.error('Update report error:', error);
+    return res.status(500).json({ error: 'Failed to update report' });
   }
 });
 

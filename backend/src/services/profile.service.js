@@ -8,7 +8,7 @@ export const createUserProfile = async ({ id, name, email, role }) => {
 export const getUserProfile = async ({ userId }) => {
     return await supabase
         .from("profiles")
-        .select("id, name, email, role, username, display_name, bio, social_links, preferred_payment_provider, stripe_customer_id, stripe_account_id, profile_image_url, created_at, updated_at")
+        .select("id, name, email, role, roles, username, display_name, bio, social_links, preferred_payment_provider, stripe_customer_id, stripe_account_id, profile_image_url, is_verified_seller, show_admin_badge, created_at, updated_at")
         .eq("id", userId)
         .single();
 }
@@ -16,7 +16,7 @@ export const getUserProfile = async ({ userId }) => {
 export const getPublicProfile = async ({ userId }) => {
     return await supabase
         .from("profiles")
-        .select("id, name, username, display_name, bio, social_links, profile_image_url, created_at")
+        .select("id, name, username, display_name, bio, social_links, profile_image_url, roles, is_verified_seller, show_admin_badge, created_at")
         .eq("id", userId)
         .single();
 }
@@ -24,7 +24,7 @@ export const getPublicProfile = async ({ userId }) => {
 export const getProfileByUsername = async (username) => {
     return await supabase
         .from("profiles")
-        .select("id, name, username, display_name, bio, social_links, profile_image_url, created_at")
+        .select("id, name, username, display_name, bio, social_links, profile_image_url, roles, is_verified_seller, show_admin_badge, created_at")
         .eq("username", username)
         .single();
 }
@@ -35,9 +35,8 @@ export const searchProfiles = async (query, options = {}) => {
 
     return await supabase
         .from("profiles")
-        .select("id, name, username, display_name, bio, profile_image_url, created_at, role", { count: "exact" })
+        .select("id, name, username, display_name, bio, profile_image_url, created_at, role, roles, is_verified_seller, show_admin_badge", { count: "exact" })
         .or(`name.ilike.%${query}%,username.ilike.%${query}%,display_name.ilike.%${query}%`)
-        .eq("role", "seller")
         .order("created_at", { ascending: false })
         .range(offset, offset + limit - 1);
 }
@@ -52,7 +51,7 @@ export const updateUserProfile = async ({ userId, updates }) => {
         .from("profiles")
         .update(updateData)
         .eq("id", userId)
-        .select("id, name, email, role, username, display_name, bio, social_links, preferred_payment_provider, stripe_customer_id, stripe_account_id, profile_image_url, created_at, updated_at")
+        .select("id, name, email, role, roles, username, display_name, bio, social_links, preferred_payment_provider, stripe_customer_id, stripe_account_id, profile_image_url, is_verified_seller, show_admin_badge, created_at, updated_at")
         .single();
 }
 

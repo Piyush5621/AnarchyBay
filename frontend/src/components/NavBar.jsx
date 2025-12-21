@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/auth/use-auth";
-import SpotlightSearch from "./SpotlightSearch";
+import { MarketplaceSpotlight } from "./ui/marketplace-spotlight";
 
 export default function NavBar() {
   const [scrolled, setScrolled] = useState(false);
@@ -23,6 +23,18 @@ export default function NavBar() {
     const handleOpenSpotlight = () => setSpotlightOpen(true);
     document.addEventListener("open-spotlight", handleOpenSpotlight);
     return () => document.removeEventListener("open-spotlight", handleOpenSpotlight);
+  }, []);
+
+  // Keyboard shortcut (Cmd+K / Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSpotlightOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   useEffect(() => {
@@ -276,7 +288,7 @@ export default function NavBar() {
         </div>
       </nav>
 
-      <SpotlightSearch isOpen={spotlightOpen} onClose={() => setSpotlightOpen(false)} />
+      <MarketplaceSpotlight isOpen={spotlightOpen} handleClose={() => setSpotlightOpen(false)} />
     </>
   );
 }

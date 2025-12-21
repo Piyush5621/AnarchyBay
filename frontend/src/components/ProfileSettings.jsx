@@ -31,6 +31,7 @@ export default function ProfileSettings() {
     username: "",
     bio: "",
     social_links: {},
+    show_admin_badge: false,
   });
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -49,6 +50,7 @@ export default function ProfileSettings() {
         username: profile.username || "",
         bio: profile.bio || "",
         social_links: profile.social_links || {},
+        show_admin_badge: profile.show_admin_badge ?? false,
       });
       setPreviewImage(profile.profile_image_url || null);
     }
@@ -277,6 +279,23 @@ export default function ProfileSettings() {
                   />
                   <p className="text-xs text-gray-500 mt-1">{form.bio.length}/500 characters</p>
                 </div>
+                
+                {profile?.roles?.includes('admin') && (
+                  <div className="pt-4 border-t border-gray-200">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.show_admin_badge}
+                        onChange={e => setForm(f => ({ ...f, show_admin_badge: e.target.checked }))}
+                        className="w-5 h-5 border-3 border-black"
+                      />
+                      <div>
+                        <p className="font-bold">Show Admin Badge</p>
+                        <p className="text-xs text-gray-500">Display your admin badge on your profile</p>
+                      </div>
+                    </label>
+                  </div>
+                )}
               </div>
             </div>
 

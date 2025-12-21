@@ -20,6 +20,7 @@ import {
 } from "../controllers/variant.controller.js";
 import { getProductFilesController } from "../controllers/file.controller.js";
 import { requireAuth, requireCreator, optionalAuth } from "../middleware/auth.js";
+import { supabase } from "../lib/supabase.js";
 
 const router = Router();
 
@@ -58,5 +59,65 @@ router.put("/:id", requireAuth, requireCreator, upload.fields([
   { name: 'preview_images', maxCount: 10 }
 ]), updateProductController);
 router.delete("/:id", requireAuth, requireCreator, deleteProductController);
+
+// Report a product
+router.post("/:id/report", requireAuth, async (req, res) => {
+  try {
+    const { reason, description } = req.body;
+    const productId = req.params.id;
+    const reporterId = req.user.id;
+
+    if (!reason) {
+      return res.status(400).json({ error: 'Report reason is required' });
+    }
+
+    // Check if product exists
+    const { data: product, error: productError } = await supabase
+      .from('products')
+      .select('id')
+      .eq('id', productId)
+      .single();
+
+    if (productError || !product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    // Check if user already reported this product
+    const { data: existingReport } = await supabase
+      .from('product_reports')
+      .select('id')
+      .eq('product_id', productId)
+      .eq('reporter_id', reporterId)
+      .eq('status', 'pending')
+      .single();
+
+    if (existingReport) {
+      return res.status(400).json({ error: 'You have already reported this product' });
+    }
+
+    // Create report
+    const { data: report, error: reportError } = await supabase
+      .from('product_reports')
+      .insert({
+        product_id: productId,
+        reporter_id: reporterId,
+        reason,
+        description,
+        status: 'pending'
+      })
+      .select()
+      .single();
+
+    if (reportError) throw reportError;
+
+    return res.json({ 
+      message: 'Report submitted successfully. Our team will review it soon.',
+      report 
+    });
+  } catch (error) {
+    console.error('Report product error:', error);
+    return res.status(500).json({ error: 'Failed to submit report' });
+  }
+});
 
 export default router;

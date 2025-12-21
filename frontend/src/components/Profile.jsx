@@ -5,15 +5,24 @@ import useTotalProducts from '@/hooks/products/use-total-products';
 import NavBar from './NavBar';
 import { toast } from 'sonner';
 import { getAccessToken } from '@/lib/api/client';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { getMyProducts } from '@/services/products/product.service';
+import { UserBadges } from './ui/role-badges';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export default function Profile() {
+  const { userId } = useParams(); // Get userId from URL
   const { isAuthenticated, user, role } = useAuth();
   const profileQuery = useUserProfileInfo();
   const productsQuery = useTotalProducts();
+  
+  // State for viewing another user's profile
+  const [viewingProfile, setViewingProfile] = useState(null);
+  const [viewingProducts, setViewingProducts] = useState([]);
+  const [loadingViewProfile, setLoadingViewProfile] = useState(false);
+  
+  const isViewingOtherUser = userId && userId !== user?.id;
   
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -31,13 +40,46 @@ export default function Profile() {
   const [usernameAvailable, setUsernameAvailable] = useState(true);
   const [checkingUsername, setCheckingUsername] = useState(false);
 
-  const loading = (!isAuthenticated) || profileQuery.isLoading || productsQuery.isLoading;
-  const profile = profileQuery.data || null;
-  const stats = { totalSales: 0, products: productsQuery.data ?? 0, revenue: 0 };
-  const isSeller = role === 'seller' || role === 'creator';
+  const loading = (isViewingOtherUser ? loadingViewProfile : (!isAuthenticated) || profileQuery.isLoading || productsQuery.isLoading);
+  const profile = isViewingOtherUser ? viewingProfile : (profileQuery.data || null);
+  const stats = { totalSales: 0, products: isViewingOtherUser ? viewingProducts.length : (productsQuery.data ?? 0), revenue: 0 };
+  const isSeller = isViewingOtherUser 
+    ? (viewingProfile?.roles || [viewingProfile?.role]).some(r => r === 'seller' || r === 'creator')
+    : (role === 'seller' || role === 'creator');
+
+  // Fetch other user's profile if viewing someone else
+  useEffect(() => {
+    if (userId && userId !== user?.id) {
+      fetchUserProfile(userId);
+    }
+  }, [userId, user?.id]);
+
+  const fetchUserProfile = async (targetUserId) => {
+    setLoadingViewProfile(true);
+    try {
+      const token = getAccessToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      
+      // Fetch user profile
+      const profileRes = await fetch(`${API_URL}/api/profile/user/${targetUserId}`, { headers });
+      if (!profileRes.ok) throw new Error('Profile not found');
+      const profileData = await profileRes.json();
+      setViewingProfile(profileData.profile);
+      
+      // Fetch user's products
+      const productsRes = await fetch(`${API_URL}/api/products/list?creator=${targetUserId}`, { headers });
+      const productsData = await productsRes.json();
+      setViewingProducts(productsData.products || []);
+    } catch (error) {
+      toast.error('Failed to load user profile');
+      console.error(error);
+    } finally {
+      setLoadingViewProfile(false);
+    }
+  };
 
   useEffect(() => {
-    if (profile) {
+    if (profile && !isViewingOtherUser) {
       setFormData({
         name: profile.name || '',
         username: profile.username || '',
@@ -45,7 +87,7 @@ export default function Profile() {
         bio: profile.bio || '',
       });
     }
-  }, [profile]);
+  }, [profile, isViewingOtherUser]);
 
   useEffect(() => {
     if (formData.username && formData.username !== profile?.username) {
@@ -78,10 +120,10 @@ export default function Profile() {
   }, [activeTab, isAuthenticated]);
 
   useEffect(() => {
-    if (activeTab === 'products' && isAuthenticated && isSeller) {
+    if (activeTab === 'products' && isAuthenticated && isSeller && !isViewingOtherUser) {
       fetchMyProducts();
     }
-  }, [activeTab, isAuthenticated, isSeller]);
+  }, [activeTab, isAuthenticated, isSeller, isViewingOtherUser]);
 
   const fetchMyProducts = async () => {
     setLoadingProducts(true);
@@ -208,6 +250,15 @@ export default function Profile() {
                   {profile?.username && (
                     <p className="text-gray-500">@{profile.username}</p>
                   )}
+                  {profile && (
+                    <div className="mt-3 flex justify-center">
+                      <UserBadges
+                        roles={profile.roles || [profile.role]}
+                        isVerifiedSeller={profile.is_verified_seller}
+                        showAdminBadge={profile.show_admin_badge}
+                      />
+                    </div>
+                  )}
                   {profile?.bio && (
                     <p className="text-sm text-gray-700 mt-3 leading-relaxed">{profile.bio}</p>
                   )}
@@ -271,10 +322,9 @@ export default function Profile() {
                       )}
                     </div>
                   )}
-                  <p className="text-sm text-gray-600 mt-4">{user?.email || profile?.email}</p>
-                  <span className={`inline-block mt-3 px-4 py-1 text-sm font-bold uppercase border-2 border-black ${isSeller ? 'bg-[var(--mint)]' : 'bg-[var(--pink-100)]'}`}>
-                    {role || 'customer'}
-                  </span>
+                  {!isViewingOtherUser && profile?.email && (
+                    <p className="text-sm text-gray-600 mt-4">{profile.email}</p>
+                  )}
                 </div>
 
                 <div className="mt-6 space-y-2">
@@ -282,22 +332,24 @@ export default function Profile() {
                     onClick={() => setActiveTab('info')}
                     className={`w-full py-3 font-bold text-left px-4 border-3 transition-all ${activeTab === 'info' ? 'bg-[var(--pink-500)] text-white border-black shadow-[3px_3px_0px_var(--black)]' : 'bg-white border-transparent hover:bg-[var(--pink-50)]'}`}
                   >
-                    Account Info
+                    {isViewingOtherUser ? 'Profile Info' : 'Account Info'}
                   </button>
                   {isSeller && (
                     <button 
                       onClick={() => setActiveTab('products')}
                       className={`w-full py-3 font-bold text-left px-4 border-3 transition-all ${activeTab === 'products' ? 'bg-[var(--pink-500)] text-white border-black shadow-[3px_3px_0px_var(--black)]' : 'bg-white border-transparent hover:bg-[var(--pink-50)]'}`}
                     >
-                      Your Products
+                      {isViewingOtherUser ? 'Products' : 'Your Products'}
                     </button>
                   )}
-                  <button 
-                    onClick={() => setActiveTab('wishlist')}
-                    className={`w-full py-3 font-bold text-left px-4 border-3 transition-all ${activeTab === 'wishlist' ? 'bg-[var(--pink-500)] text-white border-black shadow-[3px_3px_0px_var(--black)]' : 'bg-white border-transparent hover:bg-[var(--pink-50)]'}`}
-                  >
-                    Wishlist
-                  </button>
+                  {!isViewingOtherUser && (
+                    <button 
+                      onClick={() => setActiveTab('wishlist')}
+                      className={`w-full py-3 font-bold text-left px-4 border-3 transition-all ${activeTab === 'wishlist' ? 'bg-[var(--pink-500)] text-white border-black shadow-[3px_3px_0px_var(--black)]' : 'bg-white border-transparent hover:bg-[var(--pink-50)]'}`}
+                    >
+                      Wishlist
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -395,13 +447,15 @@ export default function Profile() {
                     <>
                       <div className="bg-white border-3 border-black shadow-[6px_6px_0px_var(--black)] p-8">
                         <div className="flex items-center justify-between mb-6">
-                          <h2 className="text-xl font-black">Account Info</h2>
-                          <button 
-                            onClick={() => setEditing(true)}
-                            className="px-4 py-2 font-bold uppercase bg-[var(--pink-500)] text-white border-3 border-black shadow-[3px_3px_0px_var(--black)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_var(--black)] transition-all text-sm"
-                          >
-                            Edit
-                          </button>
+                          <h2 className="text-xl font-black">{isViewingOtherUser ? 'Profile Info' : 'Account Info'}</h2>
+                          {!isViewingOtherUser && (
+                            <button 
+                              onClick={() => setEditing(true)}
+                              className="px-4 py-2 font-bold uppercase bg-[var(--pink-500)] text-white border-3 border-black shadow-[3px_3px_0px_var(--black)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_var(--black)] transition-all text-sm"
+                            >
+                              Edit
+                            </button>
+                          )}
                         </div>
                         <div className="space-y-4">
                           <div className="flex justify-between py-3 border-b border-dashed border-gray-200">
@@ -416,10 +470,12 @@ export default function Profile() {
                             <span className="font-bold">Display Name</span>
                             <span className="text-gray-600">{profile?.display_name || '-'}</span>
                           </div>
-                          <div className="flex justify-between py-3">
-                            <span className="font-bold">Email</span>
-                            <span className="text-gray-600">{profile?.email || '-'}</span>
-                          </div>
+                          {!isViewingOtherUser && (
+                            <div className="flex justify-between py-3">
+                              <span className="font-bold">Email</span>
+                              <span className="text-gray-600">{profile?.email || '-'}</span>
+                            </div>
+                          )}
                         </div>
                         {profile?.bio && (
                           <div className="mt-6 pt-6 border-t border-gray-200">
@@ -525,22 +581,24 @@ export default function Profile() {
               {activeTab === 'products' && isSeller && (
                 <div className="bg-white border-3 border-black shadow-[6px_6px_0px_var(--black)] p-8">
                   <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-black">Your Products</h2>
-                    <Link
-                      to="/create-product"
-                      className="px-4 py-2 font-bold uppercase bg-[var(--mint)] text-black border-3 border-black shadow-[3px_3px_0px_var(--black)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_var(--black)] transition-all text-sm"
-                    >
-                      + New Product
-                    </Link>
+                    <h2 className="text-xl font-black">{isViewingOtherUser ? 'Products' : 'Your Products'}</h2>
+                    {!isViewingOtherUser && (
+                      <Link
+                        to="/create-product"
+                        className="px-4 py-2 font-bold uppercase bg-[var(--mint)] text-black border-3 border-black shadow-[3px_3px_0px_var(--black)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_var(--black)] transition-all text-sm"
+                      >
+                        + New Product
+                      </Link>
+                    )}
                   </div>
                   
-                  {loadingProducts ? (
+                  {(isViewingOtherUser ? loadingViewProfile : loadingProducts) ? (
                     <div className="space-y-4 animate-pulse">
                       {[1, 2, 3].map(i => (
                         <div key={i} className="h-24 bg-gray-200 border-3 border-black" />
                       ))}
                     </div>
-                  ) : myProducts.length === 0 ? (
+                  ) : (isViewingOtherUser ? viewingProducts : myProducts).length === 0 ? (
                     <div className="text-center py-12">
                       <div className="text-5xl mb-4">📦</div>
                       <h3 className="font-black text-xl mb-2">No products yet</h3>
@@ -554,7 +612,7 @@ export default function Profile() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {myProducts.map((product) => (
+                      {(isViewingOtherUser ? viewingProducts : myProducts).map((product) => (
                         <div key={product.id} className="border-3 border-black p-4 flex gap-4 bg-[var(--pink-50)]">
                           <Link to={`/product/${product.id}`} className="w-20 h-20 flex-shrink-0 bg-white border-3 border-black overflow-hidden">
                             {product.thumbnail_url ? (
@@ -577,20 +635,22 @@ export default function Profile() {
                                   {product.is_active ? 'Active' : 'Inactive'}
                                 </span>
                               </div>
-                              <div className="flex gap-2">
-                                <Link
-                                  to={`/edit-product/${product.id}`}
-                                  className="px-3 py-1 font-bold text-sm uppercase bg-white text-black border-2 border-black hover:bg-[var(--yellow-400)] transition-colors"
-                                >
-                                  Edit
-                                </Link>
-                                <button
-                                  onClick={() => deleteProduct(product.id)}
-                                  className="px-3 py-1 font-bold text-sm uppercase bg-white text-red-600 border-2 border-black hover:bg-red-100 transition-colors"
-                                >
-                                  Delete
-                                </button>
-                              </div>
+                              {!isViewingOtherUser && (
+                                <div className="flex gap-2">
+                                  <Link
+                                    to={`/edit-product/${product.id}`}
+                                    className="px-3 py-1 font-bold text-sm uppercase bg-white text-black border-2 border-black hover:bg-[var(--yellow-400)] transition-colors"
+                                  >
+                                    Edit
+                                  </Link>
+                                  <button
+                                    onClick={() => deleteProduct(product.id)}
+                                    className="px-3 py-1 font-bold text-sm uppercase bg-white text-red-600 border-2 border-black hover:bg-red-100 transition-colors"
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
