@@ -27,6 +27,7 @@ import LoginPage from './components/auth/LoginPage.jsx';
 import AuthStatusPage from './components/auth/AuthStatusPage.jsx';
 import AuthCallbackPage from './components/auth/AuthCallbackPage.jsx';
 import VerifyEmailPage from './components/auth/VerifyEmailPage.jsx';
+import ContactPage from './components/ContactPage.jsx';
 
 
 function App() {
@@ -60,6 +61,7 @@ function App() {
         <Route path='/checkout/success' element={<CheckoutSuccessPage />} />
         <Route path='/help-center' element={<HelpCenterPage />} />
         <Route path='/terms' element={<Terms />} />
+        <Route path='/contact' element={<ContactPage />} />
 
       </Routes>
     </BrowserRouter>
